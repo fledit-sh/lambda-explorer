@@ -10,9 +10,12 @@ except ImportError:
 
 # Basisklasse für symbolische Formeln
 class Formel:
-    """
-    Basisklasse für symbolische Formeln.
-    Liefert automatisiert numerische Solver für alle Variablen einer Gleichung.
+    """Base class for symbolic equations.
+
+    Given a list of variable names and a ``sympy`` equation this class
+    automatically generates numerical solvers for every variable. The
+    :meth:`solve` method expects all but one variables as keyword arguments and
+    returns the numeric solution for the missing one.
     """
     def __init__(self, var_names: list[str], eq: sympy.Eq):
         self.vars: Dict[str, sympy.Basic] = {name: sympy.symbols(name) for name in var_names}
@@ -26,6 +29,14 @@ class Formel:
             self._solvers[target] = sympy.lambdify(args, sols[0], "numpy")
 
     def solve(self, **knowns) -> float:
+        """Return the value of the variable that was left unspecified.
+
+        Parameters
+        ----------
+        **knowns : float
+            Keyword arguments for all known variable values. Exactly one
+            variable must be omitted so that it can be solved for.
+        """
         total = set(self.vars.keys())
         given = set(knowns.keys())
         extras = given - total
@@ -58,13 +69,26 @@ class KreisFlaeche(Formel):
 
 # Helper-Funktionen für GUI-Interaktionen
 def clear_callback(sender, app_data, user_data):
+    """Clear the value of the input field referenced by *user_data*."""
     dpg.set_value(user_data, "")
 
+
 def default_callback(sender, app_data, user_data):
+    """Set the default value for an input field.
+
+    Parameters
+    ----------
+    sender, app_data : Any
+        Passed through by DearPyGui and unused here.
+    user_data : Tuple[str, str]
+        Tuple of the widget tag and the default value to apply.
+    """
     tag, default_val = user_data
     dpg.set_value(tag, default_val)
 
+
 def calculate_callback(sender, app_data, user_data):
+    """Calculate the missing variable of the selected equation."""
     eq: Formel = user_data['equation']
     vars_tags = user_data['vars_tags']
     error_tag = user_data['error_tag']
@@ -91,10 +115,16 @@ def calculate_callback(sender, app_data, user_data):
         dpg.set_value(error_tag, str(e))
 
 # GUI-Aufbau
-def build_gui(width: int = 600, height: int = 400, defaults: Optional[Dict[str,str]] = None):
-    """
-    Baut die DearPyGui-Oberfläche und zeigt Formeln basierend auf allen Unterklassen von Formel.
-    defaults: Dict mit Default-Werten pro Variable (optional)
+def build_gui(width: int = 600, height: int = 400, defaults: Optional[Dict[str, str]] = None):
+    """Start a simple formula calculator GUI.
+
+    Parameters
+    ----------
+    width, height : int
+        Size of the created DearPyGui window.
+    defaults : dict[str, str] or None
+        Optional mapping of variable names to default values shown in the
+        input fields.
     """
     dpg.create_context()
     defaults = defaults or {}
