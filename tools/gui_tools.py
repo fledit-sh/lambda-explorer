@@ -15,19 +15,21 @@ for cls in formula_classes.values():
 
 # Callback: calculate just-cleared input and then full calculation
 def calc_input_callback(sender, app_data, user_data):
-    """Clears this input and triggers calculation using the shared user_data."""
+    """Clear the input field and immediately recalculate the equation."""
     input_tag = user_data['input_tag']
     dpg.set_value(input_tag, '')
     calculate_callback(sender, app_data, user_data)
 
 # Callback to set default into input
 def set_default_callback(sender, app_data, user_data):
+    """Insert the stored default value for the given variable."""
     input_tag, var = user_data
     default = default_values.get(var, '')
     dpg.set_value(input_tag, default)
 
 # Callback to calculate formula from bottom button
 def calculate_callback(sender, app_data, user_data):
+    """Solve the equation with the values entered by the user."""
     eq: Formel = user_data['equation']
     vars_tags = user_data['vars_tags']
     error_tag = user_data['error_tag']
@@ -55,6 +57,7 @@ def calculate_callback(sender, app_data, user_data):
 
 # Helper to update constant input fields for plotting
 def update_plot_inputs(sender, app_data, user_data):
+    """Refresh the constant value input fields when plot variables change."""
     eq: Formel = user_data['equation']
     x_var = dpg.get_value(user_data['x_var_tag'])
     y_var = dpg.get_value(user_data['y_var_tag'])
@@ -71,6 +74,7 @@ def update_plot_inputs(sender, app_data, user_data):
 
 # Callback to compute and display plot data
 def plot_callback(sender, app_data, user_data):
+    """Calculate plot data for the selected x/y variables."""
     eq: Formel = user_data['equation']
     x_var = dpg.get_value(user_data['x_var_tag'])
     y_var = dpg.get_value(user_data['y_var_tag'])
@@ -101,6 +105,7 @@ def plot_callback(sender, app_data, user_data):
 
 # Open per-formula window
 def open_formula_window(sender, app_data, user_data):
+    """Create or show a window for the selected formula."""
     cls_name = user_data
     eq = formula_classes[cls_name]()
     window_tag = f"win_{cls_name}"
@@ -171,6 +176,7 @@ def open_formula_window(sender, app_data, user_data):
 
 # Open defaults configuration window
 def open_defaults_window(sender, app_data, user_data):
+    """Open a window to configure default values for all variables."""
     # Reopen existing window
     if dpg.does_item_exist('win_defaults'):
         dpg.show_item('win_defaults')
@@ -210,6 +216,7 @@ def open_defaults_window(sender, app_data, user_data):
 
 # Build context menu overview
 def build_context_menu(width=320, height=390):
+    """Open the main window showing all available formulas."""
     dpg.create_context()
     with dpg.window(label="Formel-Übersicht", width=300, height=350):
         dpg.add_text("Rechtsklick auf Formeln zum Öffnen")
