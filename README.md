@@ -41,10 +41,10 @@ mol = eq.solve(P=101325, V=1.0, R=8.314, T=300)
 print(mol)
 ```
 
-To launch the GUI from Python simply call `lambda_explorer.aero.main()`:
+To launch the GUI from Python simply call `lambda_explorer.main()`:
 
 ```python
-from lambda_explorer.aero import main
+from lambda_explorer import main
 
 main()
 ```
