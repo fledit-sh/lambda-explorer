@@ -1,1 +1,1 @@
-include tools/defaults.json
+include lambda_explorer/tools/defaults.json

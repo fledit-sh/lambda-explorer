@@ -19,3 +19,9 @@ dependencies = [
 
 [project.scripts]
 lambda-explorer = "lambda_explorer.aero:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+"lambda_explorer.tools" = ["defaults.json"]
