@@ -1,6 +1,6 @@
 # gui_tools.py
 import sympy  # type: ignore
-from typing import Dict, Type, Optional
+from typing import Dict, Type, Optional, List
 import dearpygui.dearpygui as dpg
 from aero_tools import Formel
 
@@ -53,6 +53,52 @@ def calculate_callback(sender, app_data, user_data):
     except Exception as e:
         dpg.set_value(error_tag, str(e))
 
+# Helper to update constant input fields for plotting
+def update_plot_inputs(sender, app_data, user_data):
+    eq: Formel = user_data['equation']
+    x_var = dpg.get_value(user_data['x_var_tag'])
+    y_var = dpg.get_value(user_data['y_var_tag'])
+    group = user_data['const_group']
+    dpg.delete_item(group, children_only=True)
+    user_data['const_tags'].clear()
+    for var in eq.vars:
+        if var in (x_var, y_var):
+            continue
+        tag = f"{group}_{var}"
+        default = default_values.get(var, '')
+        dpg.add_input_text(parent=group, label=var, tag=tag, default_value=default)
+        user_data['const_tags'][var] = tag
+
+# Callback to compute and display plot data
+def plot_callback(sender, app_data, user_data):
+    eq: Formel = user_data['equation']
+    x_var = dpg.get_value(user_data['x_var_tag'])
+    y_var = dpg.get_value(user_data['y_var_tag'])
+    start = float(dpg.get_value(user_data['x_start']))
+    end = float(dpg.get_value(user_data['x_end']))
+    step = float(dpg.get_value(user_data['x_step']))
+    consts = {}
+    for var, tag in user_data['const_tags'].items():
+        val = dpg.get_value(tag)
+        try:
+            consts[var] = float(val)
+        except ValueError:
+            return
+    xs: List[float] = []
+    ys: List[float] = []
+    x = start
+    while x <= end:
+        knowns = consts.copy()
+        knowns[x_var] = x
+        try:
+            y_val = eq.solve(**knowns)
+        except Exception:
+            break
+        xs.append(x)
+        ys.append(y_val)
+        x += step
+    dpg.set_value(user_data['series_tag'], [xs, ys])
+
 # Open per-formula window
 def open_formula_window(sender, app_data, user_data):
     cls_name = user_data
@@ -64,19 +110,64 @@ def open_formula_window(sender, app_data, user_data):
     vars_tags: Dict[str, str] = {}
     error_tag = f"{window_tag}_error"
     shared_data = {'equation': eq, 'vars_tags': vars_tags, 'error_tag': error_tag}
-    with dpg.window(label=cls_name, tag=window_tag, width=400, height=300):
+
+    plot_data = {
+        'equation': eq,
+        'const_tags': {},
+    }
+
+    with dpg.window(label=cls_name, tag=window_tag, width=450, height=400):
         dpg.add_text(f"Formel: {cls_name}")
-        for var in eq.vars:
-            input_tag = f"{window_tag}_input_{var}"
-            default = default_values.get(var, '')
-            with dpg.group(horizontal=True):
-                dpg.add_input_text(tag=input_tag, label=var, default_value=default)
-                shared_data['input_tag'] = input_tag
-                dpg.add_button(label="Calc", callback=calc_input_callback, user_data=shared_data.copy())
-                dpg.add_button(label="Default", callback=set_default_callback, user_data=(input_tag, var))
-            vars_tags[var] = input_tag
-        dpg.add_text(tag=error_tag, default_value="", color=[255,0,0])
-        dpg.add_button(label="Berechnen", callback=calculate_callback, user_data=shared_data)
+        with dpg.tab_bar():
+            with dpg.tab(label="Berechnung"):
+                for var in eq.vars:
+                    input_tag = f"{window_tag}_input_{var}"
+                    default = default_values.get(var, '')
+                    with dpg.group(horizontal=True):
+                        dpg.add_input_text(tag=input_tag, label=var, default_value=default)
+                        shared_data['input_tag'] = input_tag
+                        dpg.add_button(label="Calc", callback=calc_input_callback, user_data=shared_data.copy())
+                        dpg.add_button(label="Default", callback=set_default_callback, user_data=(input_tag, var))
+                    vars_tags[var] = input_tag
+                dpg.add_text(tag=error_tag, default_value="", color=[255,0,0])
+                dpg.add_button(label="Berechnen", callback=calculate_callback, user_data=shared_data)
+
+            with dpg.tab(label="Plot"):
+                x_var_tag = f"{window_tag}_xvar"
+                y_var_tag = f"{window_tag}_yvar"
+                x_start_tag = f"{window_tag}_xstart"
+                x_end_tag = f"{window_tag}_xend"
+                x_step_tag = f"{window_tag}_xstep"
+                const_group_tag = f"{window_tag}_const"
+                plot_series_tag = f"{window_tag}_series"
+
+                plot_data.update({
+                    'x_var_tag': x_var_tag,
+                    'y_var_tag': y_var_tag,
+                    'x_start': x_start_tag,
+                    'x_end': x_end_tag,
+                    'x_step': x_step_tag,
+                    'const_group': const_group_tag,
+                    'series_tag': plot_series_tag,
+                })
+
+                var_names = list(eq.vars)
+                dpg.add_combo(var_names, default_value=var_names[0], label="X", tag=x_var_tag, callback=update_plot_inputs, user_data=plot_data)
+                dpg.add_combo(var_names, default_value=var_names[1] if len(var_names) > 1 else var_names[0], label="Y", tag=y_var_tag, callback=update_plot_inputs, user_data=plot_data)
+                dpg.add_input_float(label="X Start", tag=x_start_tag, default_value=0.0)
+                dpg.add_input_float(label="X Ende", tag=x_end_tag, default_value=10.0)
+                dpg.add_input_float(label="Schritt", tag=x_step_tag, default_value=1.0)
+                dpg.add_separator()
+                with dpg.group(tag=const_group_tag):
+                    pass
+                dpg.add_button(label="Plot", callback=plot_callback, user_data=plot_data)
+                with dpg.plot(label="Diagramm", height=200):
+                    dpg.add_plot_axis(dpg.mvXAxis, label="X")
+                    with dpg.plot_axis(dpg.mvYAxis, label="Y"):
+                        dpg.add_line_series([], [], tag=plot_series_tag)
+
+        # initial population of constant inputs
+        update_plot_inputs(None, None, plot_data)
 
 # Open defaults configuration window
 def open_defaults_window(sender, app_data, user_data):
