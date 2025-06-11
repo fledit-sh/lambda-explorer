@@ -2,7 +2,7 @@
 import sympy  # type: ignore
 from typing import Dict, Type, Optional, List
 import dearpygui.dearpygui as dpg
-from aero_tools import Formel
+from .aero_tools import Formel
 
 # Discover all Formula subclasses
 formula_classes = {cls.__name__: cls for cls in Formel.__subclasses__()}
@@ -151,8 +151,9 @@ def open_formula_window(sender, app_data, user_data):
                     'series_tag': plot_series_tag,
                 })
 
-                dpg.add_combo(eq.vars, default_value=eq.vars[0], label="X", tag=x_var_tag, callback=update_plot_inputs, user_data=plot_data)
-                dpg.add_combo(eq.vars, default_value=eq.vars[1] if len(eq.vars) > 1 else eq.vars[0], label="Y", tag=y_var_tag, callback=update_plot_inputs, user_data=plot_data)
+                var_names = list(eq.vars)
+                dpg.add_combo(var_names, default_value=var_names[0], label="X", tag=x_var_tag, callback=update_plot_inputs, user_data=plot_data)
+                dpg.add_combo(var_names, default_value=var_names[1] if len(var_names) > 1 else var_names[0], label="Y", tag=y_var_tag, callback=update_plot_inputs, user_data=plot_data)
                 dpg.add_input_float(label="X Start", tag=x_start_tag, default_value=0.0)
                 dpg.add_input_float(label="X Ende", tag=x_end_tag, default_value=10.0)
                 dpg.add_input_float(label="Schritt", tag=x_step_tag, default_value=1.0)
