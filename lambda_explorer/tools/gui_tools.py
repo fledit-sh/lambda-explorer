@@ -1,7 +1,10 @@
 # gui_tools.py
 import sympy  # type: ignore
 from typing import Dict, Type, Optional, List
+import logging
+import csv
 import dearpygui.dearpygui as dpg
+from .. import logger
 from .aero_tools import Formula
 
 # Discover all Formula subclasses
@@ -12,6 +15,42 @@ default_values: Dict[str, str] = {}
 for cls in formula_classes.values():
     for var in cls().vars:
         default_values.setdefault(var, '')
+
+
+class GuiLogHandler(logging.Handler):
+    """Logging handler that writes records into a Dear PyGui window."""
+
+    def __init__(self, target: str) -> None:
+        super().__init__()
+        self.target = target
+
+    def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover - GUI
+        msg = self.format(record)
+        dpg.add_text(msg, parent=self.target)
+
+
+log_window_tag = "logger_window"
+log_container_tag = "logger_container"
+gui_log_handler: Optional[GuiLogHandler] = None
+
+
+def setup_logger_window() -> None:  # pragma: no cover - GUI
+    """Create the logging window and attach handler."""
+    global gui_log_handler
+    if gui_log_handler:
+        return
+    with dpg.window(label="Logs", tag=log_window_tag, width=400, height=200, show=False):
+        with dpg.child_window(tag=log_container_tag, autosize_x=True, autosize_y=True):
+            pass
+    gui_log_handler = GuiLogHandler(log_container_tag)
+    gui_log_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(gui_log_handler)
+
+
+def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
+    """Display the logging window."""
+    setup_logger_window()
+    dpg.show_item(log_window_tag)
 
 # Callback: calculate just-cleared input and then full calculation
 def calc_input_callback(sender, app_data, user_data):
@@ -33,6 +72,7 @@ def calculate_callback(sender, app_data, user_data):
     eq: Formula = user_data['equation']
     vars_tags = user_data['vars_tags']
     error_tag = user_data['error_tag']
+    logger.debug("Calculate callback triggered for %s", eq.__class__.__name__)
     dpg.set_value(error_tag, '')
     knowns: Dict[str, float] = {}
     missing = []
@@ -51,8 +91,10 @@ def calculate_callback(sender, app_data, user_data):
         return
     try:
         result = eq.solve(**knowns)
+        logger.info("Solved %s for %s", eq.__class__.__name__, missing[0])
         dpg.set_value(vars_tags[missing[0]], str(result))
     except Exception as e:
+        logger.error("Error solving %s: %s", eq.__class__.__name__, e)
         dpg.set_value(error_tag, str(e))
 
 # Helper to update constant input fields for plotting
@@ -78,6 +120,7 @@ def plot_callback(sender, app_data, user_data):
     eq: Formula = user_data['equation']
     x_var = dpg.get_value(user_data['x_var_tag'])
     y_var = dpg.get_value(user_data['y_var_tag'])
+    logger.debug("Plotting %s vs %s", y_var, x_var)
     start = float(dpg.get_value(user_data['x_start']))
     end = float(dpg.get_value(user_data['x_end']))
     step = float(dpg.get_value(user_data['x_step']))
@@ -102,11 +145,38 @@ def plot_callback(sender, app_data, user_data):
         ys.append(y_val)
         x += step
     dpg.set_value(user_data['series_tag'], [xs, ys])
+    logger.info("Plotted %d points", len(xs))
+    if xs and ys:
+        max_idx = ys.index(max(ys))
+        if dpg.does_item_exist(user_data['annotation_tag']):
+            dpg.delete_item(user_data['annotation_tag'])
+        dpg.add_plot_annotation(parent=user_data['axis_y_tag'], tag=user_data['annotation_tag'],
+                                default_value=(xs[max_idx], ys[max_idx]),
+                                label=f"max={ys[max_idx]:.2f}")
+
+
+def export_csv_callback(sender, app_data, user_data):
+    """Export the plotted data to a CSV file."""
+    path = app_data.get('file_path_name') if isinstance(app_data, dict) else None
+    xs, ys = dpg.get_value(user_data['series_tag'])
+    if not path:
+        logger.warning("No file selected for CSV export")
+        return
+    try:
+        with open(path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['x', 'y'])
+            for x, y in zip(xs, ys):
+                writer.writerow([x, y])
+        logger.info("Exported CSV to %s", path)
+    except OSError as exc:
+        logger.error("Failed to export CSV: %s", exc)
 
 # Open per-formula window
 def open_formula_window(sender, app_data, user_data):
     """Create or show a window for the selected formula."""
     cls_name = user_data
+    logger.info("Open formula window: %s", cls_name)
     eq = formula_classes[cls_name]()
     window_tag = f"win_{cls_name}"
     if dpg.does_item_exist(window_tag):
@@ -145,6 +215,8 @@ def open_formula_window(sender, app_data, user_data):
                 x_step_tag = f"{window_tag}_xstep"
                 const_group_tag = f"{window_tag}_const"
                 plot_series_tag = f"{window_tag}_series"
+                axis_y_tag = f"{window_tag}_yaxis"
+                annotation_tag = f"{window_tag}_annotation"
 
                 plot_data.update({
                     'x_var_tag': x_var_tag,
@@ -154,6 +226,8 @@ def open_formula_window(sender, app_data, user_data):
                     'x_step': x_step_tag,
                     'const_group': const_group_tag,
                     'series_tag': plot_series_tag,
+                    'axis_y_tag': axis_y_tag,
+                    'annotation_tag': annotation_tag,
                 })
 
                 var_names = list(eq.vars)
@@ -166,9 +240,13 @@ def open_formula_window(sender, app_data, user_data):
                 with dpg.group(tag=const_group_tag):
                     pass
                 dpg.add_button(label="Plot", callback=plot_callback, user_data=plot_data)
+                dpg.add_same_line()
+                dpg.add_button(label="Export CSV", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_csv_dialog"))
+                with dpg.file_dialog(directory_selector=False, show=False, callback=export_csv_callback, tag=f"{window_tag}_csv_dialog", user_data=plot_data):
+                    dpg.add_file_extension(".csv", color=(0, 255, 0, 255))
                 with dpg.plot(label="Plot", height=200):
                     dpg.add_plot_axis(dpg.mvXAxis, label="X")
-                    with dpg.plot_axis(dpg.mvYAxis, label="Y"):
+                    with dpg.plot_axis(dpg.mvYAxis, label="Y", tag=axis_y_tag):
                         dpg.add_line_series([], [], tag=plot_series_tag)
 
         # initial population of constant inputs
@@ -218,6 +296,7 @@ def open_defaults_window(sender, app_data, user_data):
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
     dpg.create_context()
+    setup_logger_window()
     with dpg.window(label="Formula Overview", width=300, height=350):
         dpg.add_text("Right-click formulas to open")
         for name in formula_classes:
@@ -227,6 +306,8 @@ def build_context_menu(width=320, height=390):
                 dpg.add_menu_item(label="Open formula", callback=open_formula_window, user_data=name)
         dpg.add_separator()
         dpg.add_button(label="Default values...", callback=open_defaults_window)
+        dpg.add_same_line()
+        dpg.add_button(label="View logs", callback=show_log_window)
     dpg.create_viewport(title="Formula Overview", width=320, height=390)
     dpg.setup_dearpygui()
     dpg.show_viewport()

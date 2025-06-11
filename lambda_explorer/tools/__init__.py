@@ -32,7 +32,16 @@ __version__ = "1.0"
 
 verboselogs.install()
 logger = verboselogs.VerboseLogger("module_logger")
-coloredlogs.install(level="CRITICAL", logger=logger)
+
+
+def setup_logging(level: str = "INFO") -> None:
+    """Configure logging for this subpackage."""
+
+    coloredlogs.install(level=level, logger=logger)
+    logger.setLevel(level)
+
+
+setup_logging()
 
 # -----------------------------------------------------------------------------
 # CLASSES
