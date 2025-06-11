@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-lambda-explorer = "lambda_explorer.aero:main"
+lambda-explorer = "lambda_explorer:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

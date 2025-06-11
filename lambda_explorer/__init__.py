@@ -41,3 +41,10 @@ coloredlogs.install(level="CRITICAL", logger=logger)
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 # -----------------------------------------------------------------------------
+
+from .tools.gui_tools import build_context_menu
+
+
+def main() -> None:
+    """Launch the Lambda Explorer GUI."""
+    build_context_menu(width=800, height=600)
