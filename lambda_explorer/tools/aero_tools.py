@@ -8,8 +8,8 @@ try:
 except ImportError:
     raise ImportError("Please install dearpygui (pip install dearpygui)")
 
-# Basisklasse für symbolische Formeln
-class Formel:
+# Base class for symbolic equations
+class Formula:
     """Base class for symbolic equations.
 
     Given a list of variable names and a ``sympy`` equation this class
@@ -24,7 +24,7 @@ class Formel:
         for target, symbol in self.vars.items():
             sols = sympy.solve(self.eq, symbol)
             if not sols:
-                raise ValueError(f"Keine Lösung für {target}")
+                raise ValueError(f"No solution for {target}")
             args = [v for n, v in self.vars.items() if n != target]
             self._solvers[target] = sympy.lambdify(args, sols[0], "numpy")
 
@@ -41,33 +41,39 @@ class Formel:
         given = set(knowns.keys())
         extras = given - total
         if extras:
-            raise ValueError(f"Unbekannte Variable(n) gegeben: {', '.join(sorted(extras))}")
+            raise ValueError(
+                f"Unknown variable(s) provided: {', '.join(sorted(extras))}"
+            )
         expected = len(total) - 1
         if len(given) < expected:
             missing = sorted(total - given)
-            raise ValueError(f"{len(missing)} Variable(n) fehlen: {', '.join(missing)}")
+            raise ValueError(
+                f"{len(missing)} variable(s) missing: {', '.join(missing)}"
+            )
         if len(given) > expected:
-            raise ValueError(f"Zu viele Variablen gegeben (erwartet {expected}, erhalten {len(given)})")
+            raise ValueError(
+                f"Too many variables provided (expected {expected}, got {len(given)})"
+            )
         target = (total - given).pop()
         args = [knowns[name] for name in self.vars if name != target]
         return float(self._solvers[target](*args))
 
-# Beispiel-Formeln
-class IdealeGasGleichung(Formel):
+# Example formulas
+class IdealGasEquation(Formula):
     """P * V = n * R * T"""
     def __init__(self):
         P, V, n, R, T = sympy.symbols("P V n R T")
         eq = sympy.Eq(P * V, n * R * T)
         super().__init__(['P', 'V', 'n', 'R', 'T'], eq)
 
-class KreisFlaeche(Formel):
+class CircleArea(Formula):
     """A = pi * r**2"""
     def __init__(self):
         A, r = sympy.symbols("A r")
         eq = sympy.Eq(A, sympy.pi * r**2)
         super().__init__(['A', 'r'], eq)
 
-# Helper-Funktionen für GUI-Interaktionen
+# Helper functions for GUI interactions
 def clear_callback(sender, app_data, user_data):
     """Clear the value of the input field referenced by *user_data*."""
     dpg.set_value(user_data, "")
@@ -89,7 +95,7 @@ def default_callback(sender, app_data, user_data):
 
 def calculate_callback(sender, app_data, user_data):
     """Calculate the missing variable of the selected equation."""
-    eq: Formel = user_data['equation']
+    eq: Formula = user_data['equation']
     vars_tags = user_data['vars_tags']
     error_tag = user_data['error_tag']
     dpg.set_value(error_tag, '')
@@ -103,10 +109,10 @@ def calculate_callback(sender, app_data, user_data):
             try:
                 knowns[var] = float(val)
             except ValueError:
-                dpg.set_value(error_tag, f"Ungültiger Wert für {var}: '{val}'")
+                dpg.set_value(error_tag, f"Invalid value for {var}: '{val}'")
                 return
     if len(missing) != 1:
-        dpg.set_value(error_tag, f"Bitte genau eine Variable leer lassen (aktuell {len(missing)})")
+        dpg.set_value(error_tag, f"Please leave exactly one variable empty (currently {len(missing)})")
         return
     try:
         result = eq.solve(**knowns)
@@ -114,7 +120,7 @@ def calculate_callback(sender, app_data, user_data):
     except Exception as e:
         dpg.set_value(error_tag, str(e))
 
-# GUI-Aufbau
+# GUI layout
 def build_gui(width: int = 600, height: int = 400, defaults: Optional[Dict[str, str]] = None):
     """Start a simple formula calculator GUI.
 
@@ -129,13 +135,13 @@ def build_gui(width: int = 600, height: int = 400, defaults: Optional[Dict[str, 
     dpg.create_context()
     defaults = defaults or {}
 
-    # Entdecke alle verfügbaren Formel-Unterklassen automatisch
-    klasses = Formel.__subclasses__()
-    name_to_class: Dict[str, Type[Formel]] = {cls.__name__: cls for cls in klasses}
+    # Automatically discover all available formula subclasses
+    klasses = Formula.__subclasses__()
+    name_to_class: Dict[str, Type[Formula]] = {cls.__name__: cls for cls in klasses}
     formula_names = list(name_to_class.keys())
 
     def on_formula_change(sender, app_data):
-        # Name der gewählten Klasse
+        # Name of the selected class
         cls_name = app_data
         eq = name_to_class[cls_name]()
         # Clear previous inputs
@@ -149,22 +155,22 @@ def build_gui(width: int = 600, height: int = 400, defaults: Optional[Dict[str, 
                 dpg.add_button(label='Clear', callback=clear_callback, user_data=tag)
                 dpg.add_button(label='Default', callback=default_callback, user_data=(tag, default_val))
             vars_tags[var] = tag
-        # Aktualisiere Berechnen-Button
+        # Update calculate button
         dpg.configure_item('btn_calc', user_data={'equation': eq, 'vars_tags': vars_tags, 'error_tag': 'error_text'})
 
-    with dpg.window(label='Formelrechner', width=width, height=height):
-        dpg.add_text('Wähle eine Formel:')
+    with dpg.window(label='Formula Calculator', width=width, height=height):
+        dpg.add_text('Choose a formula:')
         dpg.add_combo(formula_names, default_value=formula_names[0], callback=on_formula_change, tag='combo_formula')
         dpg.add_separator()
         with dpg.child_window(tag='child_inputs'):
             pass
         dpg.add_text(tag='error_text', default_value='', color=[255,0,0])
-        dpg.add_button(label='Berechnen', tag='btn_calc', callback=calculate_callback)
+        dpg.add_button(label='Calculate', tag='btn_calc', callback=calculate_callback)
 
-    # Initiale Anzeige
+    # Initial display
     on_formula_change(None, formula_names[0])
 
-    dpg.create_viewport(title='Formelrechner', width=width+20, height=height+30)
+    dpg.create_viewport(title='Formula Calculator', width=width+20, height=height+30)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.start_dearpygui()
