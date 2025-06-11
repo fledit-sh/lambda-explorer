@@ -1,0 +1,139 @@
+# gui_tools.py
+import sympy  # type: ignore
+from typing import Dict, Type, Optional
+import dearpygui.dearpygui as dpg
+from aero_tools import Formel
+
+# Discover all Formula subclasses
+formula_classes = {cls.__name__: cls for cls in Formel.__subclasses__()}
+
+# Default values storage
+default_values: Dict[str, str] = {}
+for cls in formula_classes.values():
+    for var in cls().vars:
+        default_values.setdefault(var, '')
+
+# Callback: calculate just-cleared input and then full calculation
+def calc_input_callback(sender, app_data, user_data):
+    """Clears this input and triggers calculation using the shared user_data."""
+    input_tag = user_data['input_tag']
+    dpg.set_value(input_tag, '')
+    calculate_callback(sender, app_data, user_data)
+
+# Callback to set default into input
+def set_default_callback(sender, app_data, user_data):
+    input_tag, var = user_data
+    default = default_values.get(var, '')
+    dpg.set_value(input_tag, default)
+
+# Callback to calculate formula from bottom button
+def calculate_callback(sender, app_data, user_data):
+    eq: Formel = user_data['equation']
+    vars_tags = user_data['vars_tags']
+    error_tag = user_data['error_tag']
+    dpg.set_value(error_tag, '')
+    knowns: Dict[str, float] = {}
+    missing = []
+    for var, tag in vars_tags.items():
+        val = dpg.get_value(tag)
+        if not str(val).strip():
+            missing.append(var)
+        else:
+            try:
+                knowns[var] = float(val)
+            except ValueError:
+                dpg.set_value(error_tag, f"Ungültiger Wert für {var}: '{val}'")
+                return
+    if len(missing) != 1:
+        dpg.set_value(error_tag, f"Bitte genau eine Variable leer lassen (aktuell {len(missing)})")
+        return
+    try:
+        result = eq.solve(**knowns)
+        dpg.set_value(vars_tags[missing[0]], str(result))
+    except Exception as e:
+        dpg.set_value(error_tag, str(e))
+
+# Open per-formula window
+def open_formula_window(sender, app_data, user_data):
+    cls_name = user_data
+    eq = formula_classes[cls_name]()
+    window_tag = f"win_{cls_name}"
+    if dpg.does_item_exist(window_tag):
+        dpg.show_item(window_tag)
+        return
+    vars_tags: Dict[str, str] = {}
+    error_tag = f"{window_tag}_error"
+    shared_data = {'equation': eq, 'vars_tags': vars_tags, 'error_tag': error_tag}
+    with dpg.window(label=cls_name, tag=window_tag, width=400, height=300):
+        dpg.add_text(f"Formel: {cls_name}")
+        for var in eq.vars:
+            input_tag = f"{window_tag}_input_{var}"
+            default = default_values.get(var, '')
+            with dpg.group(horizontal=True):
+                dpg.add_input_text(tag=input_tag, label=var, default_value=default)
+                shared_data['input_tag'] = input_tag
+                dpg.add_button(label="Calc", callback=calc_input_callback, user_data=shared_data.copy())
+                dpg.add_button(label="Default", callback=set_default_callback, user_data=(input_tag, var))
+            vars_tags[var] = input_tag
+        dpg.add_text(tag=error_tag, default_value="", color=[255,0,0])
+        dpg.add_button(label="Berechnen", callback=calculate_callback, user_data=shared_data)
+
+# Open defaults configuration window
+def open_defaults_window(sender, app_data, user_data):
+    # Reopen existing window
+    if dpg.does_item_exist('win_defaults'):
+        dpg.show_item('win_defaults')
+        return
+    default_tags: Dict[str, str] = {}
+    with dpg.window(label="Defaultwerte konfigurieren", tag='win_defaults', width=400, height=500):
+        dpg.add_text("Defaultwerte für Variablen setzen:")
+        # Header row
+        with dpg.group(horizontal=True):
+            dpg.add_text("Variable")
+            dpg.add_text("Neuer Wert")
+            dpg.add_text("Aktuell Wert")
+        # Input rows
+        for var in sorted(default_values.keys()):
+            input_tag = f"default_input_{var}"
+            current_tag = f"current_text_{var}"
+            default_tags[var] = input_tag
+            with dpg.group(horizontal=True):
+                dpg.add_text(var)
+                dpg.add_input_text(tag=input_tag, default_value=default_values[var], width=150)
+                dpg.add_text(default_values[var], tag=current_tag)
+        dpg.add_separator()
+        # Save all defaults
+        def save_all(sender, app_data):
+            for var, tag in default_tags.items():
+                val = dpg.get_value(tag)
+                default_values[var] = val
+                dpg.set_value(f"current_text_{var}", val)
+        dpg.add_button(label="Speichern alle", callback=save_all)
+        # Export to file
+        def export_defaults(sender, app_data):
+            import json
+            with open('defaults.json', 'w', encoding='utf-8') as f:
+                json.dump(default_values, f, ensure_ascii=False, indent=2)
+        dpg.add_same_line()
+        dpg.add_button(label="Exportieren", callback=export_defaults)
+
+# Build context menu overview
+def build_context_menu(width=320, height=390):
+    dpg.create_context()
+    with dpg.window(label="Formel-Übersicht", width=300, height=350):
+        dpg.add_text("Rechtsklick auf Formeln zum Öffnen")
+        for name in formula_classes:
+            item_tag = f"item_{name}"
+            dpg.add_text(name, tag=item_tag)
+            with dpg.popup(item_tag, dpg.mvMouseButton_Right):
+                dpg.add_menu_item(label="Öffne Formel", callback=open_formula_window, user_data=name)
+        dpg.add_separator()
+        dpg.add_button(label="Defaultwerte...", callback=open_defaults_window)
+    dpg.create_viewport(title="Formel-Übersicht", width=320, height=390)
+    dpg.setup_dearpygui()
+    dpg.show_viewport()
+    dpg.start_dearpygui()
+    dpg.destroy_context()
+
+if __name__ == "__main__":
+    build_context_menu()
