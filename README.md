@@ -33,9 +33,9 @@ available in `lambda_explorer.tools.aero_tools` and provide a convenient
 calculated:
 
 ```python
-from lambda_explorer.tools.aero_tools import IdealeGasGleichung
+from lambda_explorer.tools.aero_tools import IdealGasEquation
 
-eq = IdealeGasGleichung()
+eq = IdealGasEquation()
 # Solve for n while providing the other values
 mol = eq.solve(P=101325, V=1.0, R=8.314, T=300)
 print(mol)

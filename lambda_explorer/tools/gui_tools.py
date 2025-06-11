@@ -2,10 +2,10 @@
 import sympy  # type: ignore
 from typing import Dict, Type, Optional, List
 import dearpygui.dearpygui as dpg
-from .aero_tools import Formel
+from .aero_tools import Formula
 
 # Discover all Formula subclasses
-formula_classes = {cls.__name__: cls for cls in Formel.__subclasses__()}
+formula_classes = {cls.__name__: cls for cls in Formula.__subclasses__()}
 
 # Default values storage
 default_values: Dict[str, str] = {}
@@ -30,7 +30,7 @@ def set_default_callback(sender, app_data, user_data):
 # Callback to calculate formula from bottom button
 def calculate_callback(sender, app_data, user_data):
     """Solve the equation with the values entered by the user."""
-    eq: Formel = user_data['equation']
+    eq: Formula = user_data['equation']
     vars_tags = user_data['vars_tags']
     error_tag = user_data['error_tag']
     dpg.set_value(error_tag, '')
@@ -44,10 +44,10 @@ def calculate_callback(sender, app_data, user_data):
             try:
                 knowns[var] = float(val)
             except ValueError:
-                dpg.set_value(error_tag, f"Ungültiger Wert für {var}: '{val}'")
+                dpg.set_value(error_tag, f"Invalid value for {var}: '{val}'")
                 return
     if len(missing) != 1:
-        dpg.set_value(error_tag, f"Bitte genau eine Variable leer lassen (aktuell {len(missing)})")
+        dpg.set_value(error_tag, f"Please leave exactly one variable empty (currently {len(missing)})")
         return
     try:
         result = eq.solve(**knowns)
@@ -58,7 +58,7 @@ def calculate_callback(sender, app_data, user_data):
 # Helper to update constant input fields for plotting
 def update_plot_inputs(sender, app_data, user_data):
     """Refresh the constant value input fields when plot variables change."""
-    eq: Formel = user_data['equation']
+    eq: Formula = user_data['equation']
     x_var = dpg.get_value(user_data['x_var_tag'])
     y_var = dpg.get_value(user_data['y_var_tag'])
     group = user_data['const_group']
@@ -75,7 +75,7 @@ def update_plot_inputs(sender, app_data, user_data):
 # Callback to compute and display plot data
 def plot_callback(sender, app_data, user_data):
     """Calculate plot data for the selected x/y variables."""
-    eq: Formel = user_data['equation']
+    eq: Formula = user_data['equation']
     x_var = dpg.get_value(user_data['x_var_tag'])
     y_var = dpg.get_value(user_data['y_var_tag'])
     start = float(dpg.get_value(user_data['x_start']))
@@ -122,9 +122,9 @@ def open_formula_window(sender, app_data, user_data):
     }
 
     with dpg.window(label=cls_name, tag=window_tag, width=450, height=400):
-        dpg.add_text(f"Formel: {cls_name}")
+        dpg.add_text(f"Formula: {cls_name}")
         with dpg.tab_bar():
-            with dpg.tab(label="Berechnung"):
+            with dpg.tab(label="Calculation"):
                 for var in eq.vars:
                     input_tag = f"{window_tag}_input_{var}"
                     default = default_values.get(var, '')
@@ -135,7 +135,7 @@ def open_formula_window(sender, app_data, user_data):
                         dpg.add_button(label="Default", callback=set_default_callback, user_data=(input_tag, var))
                     vars_tags[var] = input_tag
                 dpg.add_text(tag=error_tag, default_value="", color=[255,0,0])
-                dpg.add_button(label="Berechnen", callback=calculate_callback, user_data=shared_data)
+                dpg.add_button(label="Calculate", callback=calculate_callback, user_data=shared_data)
 
             with dpg.tab(label="Plot"):
                 x_var_tag = f"{window_tag}_xvar"
@@ -160,13 +160,13 @@ def open_formula_window(sender, app_data, user_data):
                 dpg.add_combo(var_names, default_value=var_names[0], label="X", tag=x_var_tag, callback=update_plot_inputs, user_data=plot_data)
                 dpg.add_combo(var_names, default_value=var_names[1] if len(var_names) > 1 else var_names[0], label="Y", tag=y_var_tag, callback=update_plot_inputs, user_data=plot_data)
                 dpg.add_input_float(label="X Start", tag=x_start_tag, default_value=0.0)
-                dpg.add_input_float(label="X Ende", tag=x_end_tag, default_value=10.0)
-                dpg.add_input_float(label="Schritt", tag=x_step_tag, default_value=1.0)
+                dpg.add_input_float(label="X End", tag=x_end_tag, default_value=10.0)
+                dpg.add_input_float(label="Step", tag=x_step_tag, default_value=1.0)
                 dpg.add_separator()
                 with dpg.group(tag=const_group_tag):
                     pass
                 dpg.add_button(label="Plot", callback=plot_callback, user_data=plot_data)
-                with dpg.plot(label="Diagramm", height=200):
+                with dpg.plot(label="Plot", height=200):
                     dpg.add_plot_axis(dpg.mvXAxis, label="X")
                     with dpg.plot_axis(dpg.mvYAxis, label="Y"):
                         dpg.add_line_series([], [], tag=plot_series_tag)
@@ -182,13 +182,13 @@ def open_defaults_window(sender, app_data, user_data):
         dpg.show_item('win_defaults')
         return
     default_tags: Dict[str, str] = {}
-    with dpg.window(label="Defaultwerte konfigurieren", tag='win_defaults', width=400, height=500):
-        dpg.add_text("Defaultwerte für Variablen setzen:")
+    with dpg.window(label="Configure default values", tag='win_defaults', width=400, height=500):
+        dpg.add_text("Set default values for variables:")
         # Header row
         with dpg.group(horizontal=True):
             dpg.add_text("Variable")
-            dpg.add_text("Neuer Wert")
-            dpg.add_text("Aktuell Wert")
+            dpg.add_text("New value")
+            dpg.add_text("Current value")
         # Input rows
         for var in sorted(default_values.keys()):
             input_tag = f"default_input_{var}"
@@ -205,29 +205,29 @@ def open_defaults_window(sender, app_data, user_data):
                 val = dpg.get_value(tag)
                 default_values[var] = val
                 dpg.set_value(f"current_text_{var}", val)
-        dpg.add_button(label="Speichern alle", callback=save_all)
+        dpg.add_button(label="Save all", callback=save_all)
         # Export to file
         def export_defaults(sender, app_data):
             import json
             with open('defaults.json', 'w', encoding='utf-8') as f:
                 json.dump(default_values, f, ensure_ascii=False, indent=2)
         dpg.add_same_line()
-        dpg.add_button(label="Exportieren", callback=export_defaults)
+        dpg.add_button(label="Export", callback=export_defaults)
 
 # Build context menu overview
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
     dpg.create_context()
-    with dpg.window(label="Formel-Übersicht", width=300, height=350):
-        dpg.add_text("Rechtsklick auf Formeln zum Öffnen")
+    with dpg.window(label="Formula Overview", width=300, height=350):
+        dpg.add_text("Right-click formulas to open")
         for name in formula_classes:
             item_tag = f"item_{name}"
             dpg.add_text(name, tag=item_tag)
             with dpg.popup(item_tag, dpg.mvMouseButton_Right):
-                dpg.add_menu_item(label="Öffne Formel", callback=open_formula_window, user_data=name)
+                dpg.add_menu_item(label="Open formula", callback=open_formula_window, user_data=name)
         dpg.add_separator()
-        dpg.add_button(label="Defaultwerte...", callback=open_defaults_window)
-    dpg.create_viewport(title="Formel-Übersicht", width=320, height=390)
+        dpg.add_button(label="Default values...", callback=open_defaults_window)
+    dpg.create_viewport(title="Formula Overview", width=320, height=390)
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.start_dearpygui()
