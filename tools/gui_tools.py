@@ -2,7 +2,7 @@
 import sympy  # type: ignore
 from typing import Dict, Type, Optional, List
 import dearpygui.dearpygui as dpg
-from aero_tools import Formel
+from .aero_tools import Formel
 
 # Discover all Formula subclasses
 formula_classes = {cls.__name__: cls for cls in Formel.__subclasses__()}
