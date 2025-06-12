@@ -50,5 +50,6 @@ main()
 ```
 
 Default values used inside the GUI can be customised. Use the *Defaults* tab in
-any formula window to import or export a `defaults.yaml` file containing a
-mapping from variable names to their default string value.
+any formula window to load or save the `defaults.yaml` file directly, or choose
+"Save As" to export the defaults to a custom YAML file. The defaults map
+variable names to their stored string values.

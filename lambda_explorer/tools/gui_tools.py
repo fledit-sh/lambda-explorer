@@ -88,6 +88,13 @@ def set_default_callback(sender, app_data, user_data):
     dpg.set_value(input_tag, default)
 
 
+# Callback to store the current input as default
+def pull_default_callback(sender, app_data, user_data):
+    """Save the value from the input field as the new default."""
+    input_tag, var = user_data
+    default_values[var] = str(dpg.get_value(input_tag))
+
+
 # Callback to calculate formula from bottom button
 def calculate_callback(sender, app_data, user_data):
     """Solve the equation with the values entered by the user."""
@@ -230,6 +237,20 @@ def import_defaults_callback(sender, app_data, user_data):
             dpg.set_value(tag, default_values[var])
 
 
+def export_defaults_default(sender, app_data, user_data):
+    """Export defaults to the standard ``defaults.yaml`` file."""
+    save_defaults_callback(sender, app_data, user_data)
+    save_defaults_file("defaults.yaml")
+
+
+def import_defaults_default(sender, app_data, user_data):
+    """Load defaults from the standard ``defaults.yaml`` file."""
+    load_defaults_file("defaults.yaml")
+    for var, tag in user_data.items():
+        if var in default_values:
+            dpg.set_value(tag, default_values[var])
+
+
 # Open per-formula window
 def open_formula_window(sender, app_data, user_data):
     """Create or show a window for the selected formula."""
@@ -279,6 +300,11 @@ def open_formula_window(sender, app_data, user_data):
                         dpg.add_button(
                             label="Default",
                             callback=set_default_callback,
+                            user_data=(input_tag, var),
+                        )
+                        dpg.add_button(
+                            label="Set Default",
+                            callback=pull_default_callback,
                             user_data=(input_tag, var),
                         )
                     vars_tags[var] = input_tag
@@ -366,9 +392,11 @@ def open_formula_window(sender, app_data, user_data):
                     def_tags[var] = tag
                 dpg.add_button(label="Save", callback=save_defaults_callback, user_data=def_tags)
                 dpg.add_same_line()
-                dpg.add_button(label="Export", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_def_export"))
+                dpg.add_button(label="Export", callback=export_defaults_default, user_data=def_tags)
                 dpg.add_same_line()
-                dpg.add_button(label="Import", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_def_import"))
+                dpg.add_button(label="Save As", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_def_export"))
+                dpg.add_same_line()
+                dpg.add_button(label="Import", callback=import_defaults_default, user_data=def_tags)
                 with dpg.file_dialog(directory_selector=False, show=False, callback=export_defaults_callback, tag=f"{window_tag}_def_export", user_data=def_tags):
                     dpg.add_file_extension(".yaml", color=(0,255,0,255))
                 with dpg.file_dialog(directory_selector=False, show=False, callback=import_defaults_callback, tag=f"{window_tag}_def_import", user_data=def_tags):
