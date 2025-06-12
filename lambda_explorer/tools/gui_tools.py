@@ -424,9 +424,13 @@ def build_context_menu(width=320, height=390):
         for name in formula_classes:
             item_tag = f"item_{name}"
             dpg.add_text(name, tag=item_tag)
-            dpg.add_item_clicked_handler(
-                item_tag, callback=open_formula_window, user_data=name
-            )
+
+            # create an item handler registry to manage click events
+            with dpg.item_handler_registry() as handler:
+                dpg.add_item_clicked_handler(
+                    callback=open_formula_window, user_data=name
+                )
+            dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
