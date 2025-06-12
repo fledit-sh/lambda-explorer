@@ -49,7 +49,6 @@ from lambda_explorer import main
 main()
 ```
 
-Default values used inside the GUI can be customised. Export the current
-defaults from the settings window or create a `defaults.yaml` file in the
-working directory with a mapping from variable names to their default string
-value.
+Default values used inside the GUI can be customised. Use the *Defaults* tab in
+any formula window to import or export a `defaults.yaml` file containing a
+mapping from variable names to their default string value.

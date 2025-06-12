@@ -1,11 +1,49 @@
 """Aerodynamic formulas and helpers."""
 
 from .formula_base import Formula
-from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
+from .aero_formulas import (
+    ReynoldsNumber,
+    DynamicViscosity,
+    KinematicViscosity,
+    ReEquation,
+    LiftEquation,
+    DragEquation,
+    MomentEquation,
+    DynamicPressure,
+    FrictionCoefficientLaminar,
+    FrictionCoefficientTurbulent,
+    BoundaryLayerThicknessLaminar,
+    DisplacementThicknessLaminar,
+    MomentumThicknessLaminar,
+    LiftCurveSlope,
+    InducedDrag,
+    TotalDragCoefficient,
+    DragPolar,
+    LiftAtMinDrag,
+    PressureCoefficient,
+    VelocityRatio,
+)
 
 __all__ = [
     "Formula",
     "ReynoldsNumber",
     "DynamicViscosity",
     "KinematicViscosity",
+    "ReEquation",
+    "LiftEquation",
+    "DragEquation",
+    "MomentEquation",
+    "DynamicPressure",
+    "FrictionCoefficientLaminar",
+    "FrictionCoefficientTurbulent",
+    "BoundaryLayerThicknessLaminar",
+    "DisplacementThicknessLaminar",
+    "MomentumThicknessLaminar",
+    "LiftCurveSlope",
+    "InducedDrag",
+    "TotalDragCoefficient",
+    "DragPolar",
+    "LiftAtMinDrag",
+    "PressureCoefficient",
+    "VelocityRatio",
 ]
