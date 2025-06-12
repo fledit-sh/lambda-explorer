@@ -17,9 +17,15 @@ class Formula:
     :meth:`solve` method expects all but one variables as keyword arguments and
     returns the numeric solution for the missing one.
     """
+    variables: list[str] = []
+
     def __init__(self, var_names: list[str], eq: sympy.Eq):
-        self.vars: Dict[str, sympy.Basic] = {name: sympy.symbols(name) for name in var_names}
+        self.vars: Dict[str, sympy.Basic] = {
+            name: sympy.symbols(name) for name in var_names
+        }
         self.eq = eq
+        # store variables also on the class for inspection without instantiation
+        self.__class__.variables = var_names
         self._solvers: Dict[str, Callable] = {}
         for target, symbol in self.vars.items():
             sols = sympy.solve(self.eq, symbol)
@@ -61,17 +67,210 @@ class Formula:
 # Example formulas
 class IdealGasEquation(Formula):
     """P * V = n * R * T"""
+
+    variables = ['P', 'V', 'n', 'R', 'T']
+
     def __init__(self):
         P, V, n, R, T = sympy.symbols("P V n R T")
         eq = sympy.Eq(P * V, n * R * T)
-        super().__init__(['P', 'V', 'n', 'R', 'T'], eq)
+        super().__init__(self.variables, eq)
 
 class CircleArea(Formula):
     """A = pi * r**2"""
+
+    variables = ['A', 'r']
+
     def __init__(self):
         A, r = sympy.symbols("A r")
         eq = sympy.Eq(A, sympy.pi * r**2)
-        super().__init__(['A', 'r'], eq)
+        super().__init__(self.variables, eq)
+
+# Additional aerodynamic formulas
+class L_eq(Formula):
+    """L = 0.5 * rho * V**2 * S * Cl"""
+
+    variables = ['L', 'rho', 'V', 'S', 'Cl']
+
+    def __init__(self):
+        L, rho, V, S, Cl = sympy.symbols("L rho V S Cl")
+        eq = sympy.Eq(L, sympy.Rational(1, 2) * rho * V**2 * S * Cl)
+        super().__init__(self.variables, eq)
+
+
+class D_eq(Formula):
+    """D = 0.5 * rho * V**2 * S * Cd"""
+
+    variables = ['D', 'rho', 'V', 'S', 'Cd']
+
+    def __init__(self):
+        D, rho, V, S, Cd = sympy.symbols("D rho V S Cd")
+        eq = sympy.Eq(D, sympy.Rational(1, 2) * rho * V**2 * S * Cd)
+        super().__init__(self.variables, eq)
+
+
+class M_eq(Formula):
+    """M = 0.5 * rho * V**2 * S * c * Cm"""
+
+    variables = ['M', 'rho', 'V', 'S', 'c', 'Cm']
+
+    def __init__(self):
+        M, rho, V, S, c, Cm = sympy.symbols("M rho V S c Cm")
+        eq = sympy.Eq(M, sympy.Rational(1, 2) * rho * V**2 * S * c * Cm)
+        super().__init__(self.variables, eq)
+
+
+class q_eq(Formula):
+    """q = 0.5 * rho * V**2"""
+
+    variables = ['q', 'rho', 'V']
+
+    def __init__(self):
+        q, rho, V = sympy.symbols("q rho V")
+        eq = sympy.Eq(q, sympy.Rational(1, 2) * rho * V**2)
+        super().__init__(self.variables, eq)
+
+
+class Re_eq(Formula):
+    """Re = rho * V * c / mu"""
+
+    variables = ['Re', 'rho', 'V', 'c', 'mu']
+
+    def __init__(self):
+        Re, rho, V, c, mu = sympy.symbols("Re rho V c mu")
+        eq = sympy.Eq(Re, rho * V * c / mu)
+        super().__init__(self.variables, eq)
+
+
+class Cf_lam(Formula):
+    """Cf = 1.328 / sqrt(Re)"""
+
+    variables = ['Cf', 'Re']
+
+    def __init__(self):
+        Cf, Re = sympy.symbols("Cf Re")
+        eq = sympy.Eq(Cf, 1.328 / sympy.sqrt(Re))
+        super().__init__(self.variables, eq)
+
+
+class Cf_turb(Formula):
+    """Cf = 0.455 / (log(Re)**2.58)"""
+
+    variables = ['Cf', 'Re']
+
+    def __init__(self):
+        Cf, Re = sympy.symbols("Cf Re")
+        eq = sympy.Eq(Cf, 0.455 / (sympy.log(Re) ** sympy.Float(2.58)))
+        super().__init__(self.variables, eq)
+
+
+class delta_lam(Formula):
+    """delta = 5 * x / sqrt(Re)"""
+
+    variables = ['delta', 'x', 'Re']
+
+    def __init__(self):
+        delta, x, Re = sympy.symbols("delta x Re")
+        eq = sympy.Eq(delta, 5 * x / sympy.sqrt(Re))
+        super().__init__(self.variables, eq)
+
+
+class delta_star_lam(Formula):
+    """delta_star = 1.72 * x / sqrt(Re)"""
+
+    variables = ['delta_star', 'x', 'Re']
+
+    def __init__(self):
+        delta_star, x, Re = sympy.symbols("delta_star x Re")
+        eq = sympy.Eq(delta_star, 1.72 * x / sympy.sqrt(Re))
+        super().__init__(self.variables, eq)
+
+
+class theta_lam(Formula):
+    """theta = 0.664 * x / sqrt(Re)"""
+
+    variables = ['theta', 'x', 'Re']
+
+    def __init__(self):
+        theta, x, Re = sympy.symbols("theta x Re")
+        eq = sympy.Eq(theta, 0.664 * x / sympy.sqrt(Re))
+        super().__init__(self.variables, eq)
+
+
+class Cl_alpha(Formula):
+    """Cl = 2 * pi * (alpha - alpha0)"""
+
+    variables = ['Cl', 'alpha', 'alpha0']
+
+    def __init__(self):
+        Cl, alpha, alpha0 = sympy.symbols("Cl alpha alpha0")
+        eq = sympy.Eq(Cl, 2 * sympy.pi * (alpha - alpha0))
+        super().__init__(self.variables, eq)
+
+
+class Cd_induced(Formula):
+    """Cd_i = Cl**2 / (pi * AR * e)"""
+
+    variables = ['Cd_i', 'Cl', 'AR', 'e']
+
+    def __init__(self):
+        Cd_i, Cl, AR, e = sympy.symbols("Cd_i Cl AR e")
+        eq = sympy.Eq(Cd_i, Cl**2 / (sympy.pi * AR * e))
+        super().__init__(self.variables, eq)
+
+
+class Cd_total(Formula):
+    """Cd = Cd0 + k * Cl**2"""
+
+    variables = ['Cd', 'Cd0', 'k', 'Cl']
+
+    def __init__(self):
+        Cd, Cd0, k, Cl = sympy.symbols("Cd Cd0 k Cl")
+        eq = sympy.Eq(Cd, Cd0 + k * Cl**2)
+        super().__init__(self.variables, eq)
+
+
+class Cd_polar(Formula):
+    """Cd = Cd0 + (Cl**2 / (pi * AR * e))"""
+
+    variables = ['Cd', 'Cd0', 'Cl', 'AR', 'e']
+
+    def __init__(self):
+        Cd, Cd0, Cl, AR, e = sympy.symbols("Cd Cd0 Cl AR e")
+        eq = sympy.Eq(Cd, Cd0 + (Cl**2 / (sympy.pi * AR * e)))
+        super().__init__(self.variables, eq)
+
+
+class Cl_min_drag(Formula):
+    """Cl_md = sqrt(Cd0 * pi * AR * e)"""
+
+    variables = ['Cl_md', 'Cd0', 'AR', 'e']
+
+    def __init__(self):
+        Cl_md, Cd0, AR, e = sympy.symbols("Cl_md Cd0 AR e")
+        eq = sympy.Eq(Cl_md, sympy.sqrt(Cd0 * sympy.pi * AR * e))
+        super().__init__(self.variables, eq)
+
+
+class Cp(Formula):
+    """Cp = 1 - (V/V_inf)**2"""
+
+    variables = ['Cp', 'V', 'V_inf']
+
+    def __init__(self):
+        Cp_sym, V, V_inf = sympy.symbols("Cp V V_inf")
+        eq = sympy.Eq(Cp_sym, 1 - (V / V_inf) ** 2)
+        super().__init__(self.variables, eq)
+
+
+class V_ratio(Formula):
+    """V_ratio = sqrt(1 - Cp)"""
+
+    variables = ['V_ratio', 'Cp']
+
+    def __init__(self):
+        V_ratio_sym, Cp = sympy.symbols("V_ratio Cp")
+        eq = sympy.Eq(V_ratio_sym, sympy.sqrt(1 - Cp))
+        super().__init__(self.variables, eq)
 
 # Additional aerodynamic formulas
 class L_eq(Formula):

@@ -25,7 +25,7 @@ def _get_next_pos() -> List[int]:
 # Default values storage
 default_values: Dict[str, str] = {}
 for cls in formula_classes.values():
-    for var in cls().vars:
+    for var in getattr(cls, "variables", []):
         default_values.setdefault(var, "")
 
 
