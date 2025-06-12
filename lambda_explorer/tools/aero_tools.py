@@ -73,6 +73,159 @@ class CircleArea(Formula):
         eq = sympy.Eq(A, sympy.pi * r**2)
         super().__init__(['A', 'r'], eq)
 
+# Additional aerodynamic formulas
+class L_eq(Formula):
+    """L = 0.5 * rho * V**2 * S * Cl"""
+
+    def __init__(self):
+        L, rho, V, S, Cl = sympy.symbols("L rho V S Cl")
+        eq = sympy.Eq(L, sympy.Rational(1, 2) * rho * V**2 * S * Cl)
+        super().__init__(['L', 'rho', 'V', 'S', 'Cl'], eq)
+
+
+class D_eq(Formula):
+    """D = 0.5 * rho * V**2 * S * Cd"""
+
+    def __init__(self):
+        D, rho, V, S, Cd = sympy.symbols("D rho V S Cd")
+        eq = sympy.Eq(D, sympy.Rational(1, 2) * rho * V**2 * S * Cd)
+        super().__init__(['D', 'rho', 'V', 'S', 'Cd'], eq)
+
+
+class M_eq(Formula):
+    """M = 0.5 * rho * V**2 * S * c * Cm"""
+
+    def __init__(self):
+        M, rho, V, S, c, Cm = sympy.symbols("M rho V S c Cm")
+        eq = sympy.Eq(M, sympy.Rational(1, 2) * rho * V**2 * S * c * Cm)
+        super().__init__(['M', 'rho', 'V', 'S', 'c', 'Cm'], eq)
+
+
+class q_eq(Formula):
+    """q = 0.5 * rho * V**2"""
+
+    def __init__(self):
+        q, rho, V = sympy.symbols("q rho V")
+        eq = sympy.Eq(q, sympy.Rational(1, 2) * rho * V**2)
+        super().__init__(['q', 'rho', 'V'], eq)
+
+
+class Re_eq(Formula):
+    """Re = rho * V * c / mu"""
+
+    def __init__(self):
+        Re, rho, V, c, mu = sympy.symbols("Re rho V c mu")
+        eq = sympy.Eq(Re, rho * V * c / mu)
+        super().__init__(['Re', 'rho', 'V', 'c', 'mu'], eq)
+
+
+class Cf_lam(Formula):
+    """Cf = 1.328 / sqrt(Re)"""
+
+    def __init__(self):
+        Cf, Re = sympy.symbols("Cf Re")
+        eq = sympy.Eq(Cf, 1.328 / sympy.sqrt(Re))
+        super().__init__(['Cf', 'Re'], eq)
+
+
+class Cf_turb(Formula):
+    """Cf = 0.455 / (log(Re)**2.58)"""
+
+    def __init__(self):
+        Cf, Re = sympy.symbols("Cf Re")
+        eq = sympy.Eq(Cf, 0.455 / (sympy.log(Re) ** sympy.Float(2.58)))
+        super().__init__(['Cf', 'Re'], eq)
+
+
+class delta_lam(Formula):
+    """delta = 5 * x / sqrt(Re)"""
+
+    def __init__(self):
+        delta, x, Re = sympy.symbols("delta x Re")
+        eq = sympy.Eq(delta, 5 * x / sympy.sqrt(Re))
+        super().__init__(['delta', 'x', 'Re'], eq)
+
+
+class delta_star_lam(Formula):
+    """delta_star = 1.72 * x / sqrt(Re)"""
+
+    def __init__(self):
+        delta_star, x, Re = sympy.symbols("delta_star x Re")
+        eq = sympy.Eq(delta_star, 1.72 * x / sympy.sqrt(Re))
+        super().__init__(['delta_star', 'x', 'Re'], eq)
+
+
+class theta_lam(Formula):
+    """theta = 0.664 * x / sqrt(Re)"""
+
+    def __init__(self):
+        theta, x, Re = sympy.symbols("theta x Re")
+        eq = sympy.Eq(theta, 0.664 * x / sympy.sqrt(Re))
+        super().__init__(['theta', 'x', 'Re'], eq)
+
+
+class Cl_alpha(Formula):
+    """Cl = 2 * pi * (alpha - alpha0)"""
+
+    def __init__(self):
+        Cl, alpha, alpha0 = sympy.symbols("Cl alpha alpha0")
+        eq = sympy.Eq(Cl, 2 * sympy.pi * (alpha - alpha0))
+        super().__init__(['Cl', 'alpha', 'alpha0'], eq)
+
+
+class Cd_induced(Formula):
+    """Cd_i = Cl**2 / (pi * AR * e)"""
+
+    def __init__(self):
+        Cd_i, Cl, AR, e = sympy.symbols("Cd_i Cl AR e")
+        eq = sympy.Eq(Cd_i, Cl**2 / (sympy.pi * AR * e))
+        super().__init__(['Cd_i', 'Cl', 'AR', 'e'], eq)
+
+
+class Cd_total(Formula):
+    """Cd = Cd0 + k * Cl**2"""
+
+    def __init__(self):
+        Cd, Cd0, k, Cl = sympy.symbols("Cd Cd0 k Cl")
+        eq = sympy.Eq(Cd, Cd0 + k * Cl**2)
+        super().__init__(['Cd', 'Cd0', 'k', 'Cl'], eq)
+
+
+class Cd_polar(Formula):
+    """Cd = Cd0 + (Cl**2 / (pi * AR * e))"""
+
+    def __init__(self):
+        Cd, Cd0, Cl, AR, e = sympy.symbols("Cd Cd0 Cl AR e")
+        eq = sympy.Eq(Cd, Cd0 + (Cl**2 / (sympy.pi * AR * e)))
+        super().__init__(['Cd', 'Cd0', 'Cl', 'AR', 'e'], eq)
+
+
+class Cl_min_drag(Formula):
+    """Cl_md = sqrt(Cd0 * pi * AR * e)"""
+
+    def __init__(self):
+        Cl_md, Cd0, AR, e = sympy.symbols("Cl_md Cd0 AR e")
+        eq = sympy.Eq(Cl_md, sympy.sqrt(Cd0 * sympy.pi * AR * e))
+        super().__init__(['Cl_md', 'Cd0', 'AR', 'e'], eq)
+
+
+class Cp(Formula):
+    """Cp = 1 - (V/V_inf)**2"""
+
+    def __init__(self):
+        Cp_sym, V, V_inf = sympy.symbols("Cp V V_inf")
+        eq = sympy.Eq(Cp_sym, 1 - (V / V_inf) ** 2)
+        super().__init__(['Cp', 'V', 'V_inf'], eq)
+
+
+class V_ratio(Formula):
+    """V_ratio = sqrt(1 - Cp)"""
+
+    def __init__(self):
+        V_ratio_sym, Cp = sympy.symbols("V_ratio Cp")
+        eq = sympy.Eq(V_ratio_sym, sympy.sqrt(1 - Cp))
+        super().__init__(['V_ratio', 'Cp'], eq)
+
 # Helper functions for GUI interactions
 def clear_callback(sender, app_data, user_data):
     """Clear the value of the input field referenced by *user_data*."""
