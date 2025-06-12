@@ -437,10 +437,20 @@ def build_context_menu(width=320, height=390):
     dpg.setup_dearpygui()
     dpg.show_viewport()
     dpg.maximize_viewport()
+
+    # dock windows on startup
+    vp_w = dpg.get_viewport_client_width()
+    vp_h = dpg.get_viewport_client_height()
+
+    # main window (context menu) on the left
     dpg.set_primary_window("main_window", True)
+    dpg.set_item_pos("main_window", [10, 10])
+    dpg.set_item_height("main_window", vp_h - 220)
+
+    # log window at the bottom
     dpg.show_item(log_window_tag)
     lh = dpg.get_item_height(log_window_tag)
-    vp_h = dpg.get_viewport_client_height()
+    dpg.set_item_width(log_window_tag, vp_w - 20)
     dpg.set_item_pos(log_window_tag, [10, vp_h - lh - 10])
     dpg.start_dearpygui()
     dpg.destroy_context()
