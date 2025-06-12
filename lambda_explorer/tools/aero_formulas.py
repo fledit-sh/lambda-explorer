@@ -37,7 +37,6 @@ class KinematicViscosity(Formula):
         eq = sympy.Eq(nu, mu / rho)
         super().__init__(self.variables, eq)
 
-
 class ReEquation(ReynoldsNumber):
     """Alias for Reynolds number equation."""
 

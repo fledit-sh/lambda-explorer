@@ -11,6 +11,7 @@ from .formula_base import Formula
 from .solver import FormulaSolver
 from .default_manager import default_values, load_defaults_file, save_defaults_file
 
+
 # Discover all Formula subclasses
 formula_classes = {cls.__name__: cls for cls in Formula.__subclasses__()}
 
