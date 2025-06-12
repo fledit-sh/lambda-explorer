@@ -50,6 +50,6 @@ main()
 ```
 
 Default values used inside the GUI can be customised. Export the current
-defaults from the settings window or create a `defaults.json` file in the
+defaults from the settings window or create a `defaults.yaml` file in the
 working directory with a mapping from variable names to their default string
 value.

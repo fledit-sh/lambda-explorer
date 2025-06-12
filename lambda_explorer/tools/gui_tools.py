@@ -221,6 +221,7 @@ def open_formula_window(sender, app_data, user_data):
         label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()
     ):
         dpg.add_text(f"Formula: {cls_name}")
+        dpg.add_text(sympy.pretty(eq.eq))
         with dpg.tab_bar():
             with dpg.tab(label="Calculation"):
                 for var in eq.vars:
@@ -343,17 +344,22 @@ def open_defaults_window(sender, app_data, user_data):
             dpg.add_text("Variable")
             dpg.add_text("New value")
             dpg.add_text("Current value")
-        # Input rows
-        for var in sorted(default_values.keys()):
-            input_tag = f"default_input_{var}"
-            current_tag = f"current_text_{var}"
-            default_tags[var] = input_tag
-            with dpg.group(horizontal=True):
-                dpg.add_text(var)
-                dpg.add_input_text(
-                    tag=input_tag, default_value=default_values[var], width=150
-                )
-                dpg.add_text(default_values[var], tag=current_tag)
+        # Input rows sorted by formula
+        for cls_name in sorted(formula_classes):
+            eq = formula_classes[cls_name]()
+            dpg.add_text(cls_name)
+            for var in eq.vars:
+                if var not in default_values:
+                    continue
+                input_tag = f"default_input_{var}"
+                current_tag = f"current_text_{var}"
+                default_tags[var] = input_tag
+                with dpg.group(horizontal=True):
+                    dpg.add_text(var)
+                    dpg.add_input_text(
+                        tag=input_tag, default_value=default_values[var], width=150
+                    )
+                    dpg.add_text(default_values[var], tag=current_tag)
         dpg.add_separator()
 
         # Save all defaults
@@ -367,13 +373,31 @@ def open_defaults_window(sender, app_data, user_data):
 
         # Export to file
         def export_defaults(sender, app_data):
-            import json
+            import yaml
 
-            with open("defaults.json", "w", encoding="utf-8") as f:
-                json.dump(default_values, f, ensure_ascii=False, indent=2)
+            with open("defaults.yaml", "w", encoding="utf-8") as f:
+                yaml.safe_dump(default_values, f, sort_keys=False)
+
+        def load_defaults(sender, app_data):
+            import yaml
+
+            try:
+                with open("defaults.yaml", "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+            except OSError as exc:
+                logger.error("Failed to load defaults: %s", exc)
+                return
+            if isinstance(data, dict):
+                for var, val in data.items():
+                    if var in default_values:
+                        default_values[var] = str(val)
+                        dpg.set_value(default_tags[var], str(val))
+                        dpg.set_value(f"current_text_{var}", str(val))
 
         dpg.add_same_line()
         dpg.add_button(label="Export", callback=export_defaults)
+        dpg.add_same_line()
+        dpg.add_button(label="Load", callback=load_defaults)
 
 
 # Build context menu overview
