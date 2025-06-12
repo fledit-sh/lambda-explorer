@@ -5,7 +5,9 @@ import logging
 import csv
 import dearpygui.dearpygui as dpg
 from .. import logger
-from .aero_tools import Formula
+# Load formula classes
+from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
+from .formula_base import Formula
 
 # Discover all Formula subclasses
 formula_classes = {cls.__name__: cls for cls in Formula.__subclasses__()}
