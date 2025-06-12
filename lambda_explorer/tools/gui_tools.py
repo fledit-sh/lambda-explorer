@@ -436,6 +436,7 @@ def build_context_menu(width=320, height=390):
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     dpg.setup_dearpygui()
     dpg.show_viewport()
+    dpg.show_item("main_window")
     dpg.maximize_viewport()
 
     # dock windows on startup
