@@ -390,13 +390,11 @@ def open_formula_window(sender, app_data, user_data):
                     tag = f"{window_tag}_def_{var}"
                     dpg.add_input_text(label=var, tag=tag, default_value=default_values.get(var, ""))
                     def_tags[var] = tag
-                dpg.add_button(label="Save", callback=save_defaults_callback, user_data=def_tags)
-                dpg.add_same_line()
-                dpg.add_button(label="Export", callback=export_defaults_default, user_data=def_tags)
+                dpg.add_button(label="Save", callback=export_defaults_default, user_data=def_tags)
                 dpg.add_same_line()
                 dpg.add_button(label="Save As", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_def_export"))
                 dpg.add_same_line()
-                dpg.add_button(label="Import", callback=import_defaults_default, user_data=def_tags)
+                dpg.add_button(label="Load", callback=import_defaults_default, user_data=def_tags)
                 with dpg.file_dialog(directory_selector=False, show=False, callback=export_defaults_callback, tag=f"{window_tag}_def_export", user_data=def_tags):
                     dpg.add_file_extension(".yaml", color=(0,255,0,255))
                 with dpg.file_dialog(directory_selector=False, show=False, callback=import_defaults_callback, tag=f"{window_tag}_def_import", user_data=def_tags):
@@ -412,6 +410,7 @@ def open_formula_window(sender, app_data, user_data):
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
     dpg.create_context()
+    dpg.configure_app(docking=True, docking_space=True)
     setup_logger_window()
     _next_pos[0], _next_pos[1] = 20, 20
     with dpg.window(
@@ -421,14 +420,13 @@ def build_context_menu(width=320, height=390):
         height=350,
         pos=_get_next_pos(),
     ):
-        dpg.add_text("Right-click formulas to open")
+        dpg.add_text("Click formulas to open")
         for name in formula_classes:
             item_tag = f"item_{name}"
             dpg.add_text(name, tag=item_tag)
-            with dpg.popup(item_tag, dpg.mvMouseButton_Right):
-                dpg.add_menu_item(
-                    label="Open formula", callback=open_formula_window, user_data=name
-                )
+            dpg.add_item_clicked_handler(
+                item_tag, callback=open_formula_window, user_data=name
+            )
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
