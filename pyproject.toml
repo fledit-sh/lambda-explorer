@@ -14,7 +14,8 @@ dependencies = [
     "sympy",
     "numpy",
     "coloredlogs",
-    "verboselogs"
+    "verboselogs",
+    "pyyaml"
 ]
 
 [project.scripts]
@@ -24,4 +25,4 @@ lambda-explorer = "lambda_explorer:main"
 where = ["."]
 
 [tool.setuptools.package-data]
-"lambda_explorer.tools" = ["defaults.json"]
+"lambda_explorer.tools" = ["defaults.yaml"]
