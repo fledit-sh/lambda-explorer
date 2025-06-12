@@ -27,18 +27,18 @@ This will open the formula browser where you can calculate and visualize formula
 
 ## Library Usage
 
-`lambda-explorer` can also be used programmatically. All formula classes are
-available in `lambda_explorer.tools.aero_tools` and provide a convenient
+`lambda-explorer` can also be used programmatically. Formula classes are
+available in `lambda_explorer.tools.aero_formulas` and provide a convenient
 `solve()` method. Exactly one variable must be omitted so that it can be
 calculated:
 
 ```python
-from lambda_explorer.tools.aero_tools import IdealGasEquation
+from lambda_explorer.tools.aero_formulas import ReynoldsNumber
 
-eq = IdealGasEquation()
-# Solve for n while providing the other values
-mol = eq.solve(P=101325, V=1.0, R=8.314, T=300)
-print(mol)
+eq = ReynoldsNumber()
+# Solve for Re while providing the other values
+re = eq.solve(rho=1.225, V=50.0, c=0.5, mu=1.8e-5)
+print(re)
 ```
 
 To launch the GUI from Python simply call `lambda_explorer.main()`:
@@ -49,7 +49,6 @@ from lambda_explorer import main
 main()
 ```
 
-Default values used inside the GUI can be customised. Export the current
-defaults from the settings window or create a `defaults.yaml` file in the
-working directory with a mapping from variable names to their default string
-value.
+Default values used inside the GUI can be customised. Use the *Defaults* tab in
+any formula window to import or export a `defaults.yaml` file containing a
+mapping from variable names to their default string value.
