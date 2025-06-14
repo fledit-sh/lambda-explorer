@@ -404,8 +404,6 @@ def open_formula_window(sender, app_data, user_data):
         update_plot_inputs(None, None, plot_data)
 
 
-
-
 # Build context menu overview
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
@@ -444,7 +442,7 @@ def build_context_menu(width=320, height=390):
     vp_h = dpg.get_viewport_client_height()
 
     # main window (context menu) on the left
-    dpg.set_primary_window("main_window", True)
+    #dpg.set_primary_window("main_window", True)
     dpg.set_item_pos("main_window", [10, 10])
     dpg.set_item_height("main_window", vp_h - 220)
 
