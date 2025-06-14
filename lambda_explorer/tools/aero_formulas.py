@@ -198,3 +198,22 @@ class VelocityRatio(Formula):
         V_ratio, Cp = sympy.symbols("V_ratio Cp")
         eq = sympy.Eq(V_ratio, sympy.sqrt(1 - Cp))
         super().__init__(self.variables, eq)
+
+
+class FirstCellSpacing(Formula):
+    """s = y_plus * l / (sqrt(0.013) * Re**(13/14))"""
+
+    variables = ["s", "y_plus", "l", "Re"]
+
+    def __init__(self) -> None:
+        s, y_plus, l, Re = sympy.symbols("s y_plus l Re")
+        eq = sympy.Eq(s, y_plus * l / (sympy.sqrt(0.013) * Re ** sympy.Rational(13, 14)))
+        cls = self.__class__
+        if not hasattr(cls, "_vars"):
+            cls._vars = {name: sympy.symbols(name) for name in self.variables}
+            cls.eq = eq
+            args = [cls._vars[n] for n in self.variables if n != "s"]
+            cls._solvers = {"s": sympy.lambdify(args, sympy.solve(eq, s)[0], "math")}
+        self.vars = cls._vars
+        self.eq = cls.eq
+        self._solvers = cls._solvers
