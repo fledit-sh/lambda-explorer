@@ -12,7 +12,6 @@ requires-python = ">=3.8"
 dependencies = [
     "dearpygui",
     "sympy",
-    "numpy",
     "coloredlogs",
     "verboselogs",
     "pyyaml"
@@ -20,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 lambda-explorer = "lambda_explorer:main"
+lambda-explorer-cli = "lambda_explorer.cli:run_cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
