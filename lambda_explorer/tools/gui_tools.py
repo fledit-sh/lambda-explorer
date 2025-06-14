@@ -10,6 +10,7 @@ from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
 from .formula_base import Formula
 from .solver import FormulaSolver
 from .default_manager import default_values, load_defaults_file, save_defaults_file
+from .layout_manager import load_layout, save_layout, LAYOUT_FILE
 
 
 # Discover all Formula subclasses
@@ -433,6 +434,7 @@ def build_context_menu(width=320, height=390):
         dpg.add_button(label="View logs", callback=show_log_window)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     dpg.setup_dearpygui()
+    load_layout()
     dpg.show_viewport()
     dpg.show_item("main_window")
     dpg.maximize_viewport()
@@ -451,6 +453,7 @@ def build_context_menu(width=320, height=390):
     lh = dpg.get_item_height(log_window_tag)
     dpg.set_item_width(log_window_tag, vp_w - 20)
     dpg.set_item_pos(log_window_tag, [10, vp_h - lh - 10])
+    dpg.set_exit_callback(lambda: save_layout())
     dpg.start_dearpygui()
     dpg.destroy_context()
 
