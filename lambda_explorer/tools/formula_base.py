@@ -22,7 +22,10 @@ class Formula:
                 if not sols:
                     raise ValueError(f"No solution for {target}")
                 args = [v for n, v in cls._vars.items() if n != target]
-                cls._solvers[target] = sympy.lambdify(args, sols[0], "numpy")
+                # Use Python's ``math`` module for lightweight numerical
+                # evaluation to avoid importing ``numpy`` which adds
+                # significant overhead.
+                cls._solvers[target] = sympy.lambdify(args, sols[0], "math")
         self.vars = cls._vars
         self.eq = cls.eq
         self._solvers = cls._solvers

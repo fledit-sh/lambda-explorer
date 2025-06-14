@@ -22,13 +22,23 @@ pip install -e .
 
 ## Usage
 
-After installation you can launch the application with the command:
+After installation you can launch the GUI with the command:
 
 ```bash
 lambda-explorer
 ```
 
 This will open the formula browser where you can calculate and visualize formulas.
+
+### Lightweight CLI
+
+If memory usage is a concern you can use a simple command line interface:
+
+```bash
+lambda-explorer-cli
+```
+
+This avoids the GUI and only loads the selected formula when needed.
 
 ## Library Usage
 

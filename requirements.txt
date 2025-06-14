@@ -2,5 +2,4 @@ dearpygui
 sympy
 coloredlogs
 verboselogs
-numpy
 pyyaml
