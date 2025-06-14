@@ -1,6 +1,6 @@
 # gui_tools.py
 import sympy  # type: ignore
-from typing import Dict, Type, Optional, List
+from typing import Dict, Type, Optional, List, Set
 import logging
 import csv
 import coloredlogs
@@ -16,8 +16,17 @@ from .default_manager import default_values, load_defaults_file, save_defaults_f
 from .layout_manager import load_layout, save_layout, LAYOUT_FILE
 
 
-# Discover all Formula subclasses
-formula_classes = {cls.__name__: cls for cls in Formula.__subclasses__()}
+# Discover all Formula subclasses recursively, skipping abstract bases
+def _gather_formulas(cls: Type[Formula]) -> Set[Type[Formula]]:
+    found: Set[Type[Formula]] = set()
+    for sub in cls.__subclasses__():
+        if getattr(sub, "variables", []):
+            found.add(sub)
+        found.update(_gather_formulas(sub))
+    return found
+
+
+formula_classes = {cls.__name__: cls for cls in _gather_formulas(Formula)}
 
 # simple helper for cascading window placement
 _next_pos = [20, 20]
@@ -85,7 +94,10 @@ def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
 def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - GUI
     """Update the global logging level from the settings window."""
     level = str(app_data)
-    coloredlogs.set_level(level, logger=logger)
+    # Newer versions of ``coloredlogs`` no longer accept the ``logger``
+    # keyword argument in :func:`set_level`. Set the level on the root
+    # handler directly to avoid compatibility issues.
+    coloredlogs.set_level(level)
     logger.setLevel(level)
     logger.info("Logging level changed to %s", level)
 

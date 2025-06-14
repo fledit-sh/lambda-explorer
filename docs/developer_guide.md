@@ -3,8 +3,8 @@
 This project uses **SymPy** to define symbolic equations that can be solved and
 visualised inside the GUI. Each formula is implemented as a subclass of
 `lambda_explorer.tools.formula_base.Formula`. When a module defining new
-formulas is imported, they automatically appear in the GUI because the GUI looks
-at `Formula.__subclasses__()`.
+formulas is imported, they automatically appear in the GUI because the GUI
+recursively searches for subclasses of ``Formula``.
 
 ## Creating a Formula Class
 
