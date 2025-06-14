@@ -9,6 +9,7 @@ from .. import logger
 
 # Load formula classes
 from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
+from .interpolation_formula import ExampleIcingEquation
 from .formula_base import Formula
 from .solver import FormulaSolver
 from .default_manager import default_values, load_defaults_file, save_defaults_file

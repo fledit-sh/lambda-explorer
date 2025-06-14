@@ -22,7 +22,9 @@ from .aero_formulas import (
     LiftAtMinDrag,
     PressureCoefficient,
     VelocityRatio,
+    
 )
+from .interpolation_formula import ExampleIcingEquation
 
 __all__ = [
     "Formula",
@@ -46,4 +48,5 @@ __all__ = [
     "LiftAtMinDrag",
     "PressureCoefficient",
     "VelocityRatio",
+    "ExampleIcingEquation",
 ]
