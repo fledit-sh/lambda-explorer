@@ -59,6 +59,10 @@ any formula window to load or save the `defaults.yaml` file directly, or choose
 "Save As" to export the defaults to a custom YAML file. The defaults map
 variable names to their stored string values.
 
+The application also remembers your window layout. When you close the GUI, the
+current positions and sizes of all windows are written to `layout.ini` and
+restored on the next start.
+
 ## Developer Documentation
 
 Developers who want to implement additional formulas can follow the guide in
