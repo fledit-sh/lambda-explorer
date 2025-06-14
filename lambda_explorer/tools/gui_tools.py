@@ -248,7 +248,7 @@ def plot_callback(sender, app_data, user_data):
         if dpg.does_item_exist(user_data["annotation_tag"]):
             dpg.delete_item(user_data["annotation_tag"])
         dpg.add_plot_annotation(
-            parent=user_data["axis_y_tag"],
+            parent=user_data["plot_tag"],
             tag=user_data["annotation_tag"],
             default_value=(xs[max_idx], ys[max_idx]),
             label=f"max={ys[max_idx]:.2f}",
@@ -392,6 +392,7 @@ def open_formula_window(sender, app_data, user_data):
                 plot_series_tag = f"{window_tag}_series"
                 axis_y_tag = f"{window_tag}_yaxis"
                 annotation_tag = f"{window_tag}_annotation"
+                plot_tag = f"{window_tag}_plot"
 
                 plot_data.update(
                     {
@@ -404,6 +405,7 @@ def open_formula_window(sender, app_data, user_data):
                         "series_tag": plot_series_tag,
                         "axis_y_tag": axis_y_tag,
                         "annotation_tag": annotation_tag,
+                        "plot_tag": plot_tag,
                     }
                 )
 
@@ -446,7 +448,7 @@ def open_formula_window(sender, app_data, user_data):
                     user_data=plot_data,
                 ):
                     dpg.add_file_extension(".csv", color=(0, 255, 0, 255))
-                with dpg.plot(label="Plot", height=200):
+                with dpg.plot(label="Plot", height=200, tag=plot_tag):
                     dpg.add_plot_axis(dpg.mvXAxis, label="X")
                     with dpg.plot_axis(dpg.mvYAxis, label="Y", tag=axis_y_tag):
                         dpg.add_line_series([], [], tag=plot_series_tag)
