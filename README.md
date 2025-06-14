@@ -63,6 +63,10 @@ The application also remembers your window layout. When you close the GUI, the
 current positions and sizes of all windows are written to `layout.ini` and
 restored on the next start.
 
+The *Settings* window lets you adjust the logging level of the application at
+runtime. Choose between `DEBUG`, `INFO`, `WARNING` and `ERROR` to control the
+amount of information written to the log window.
+
 ## Developer Documentation
 
 Developers who want to implement additional formulas can follow the guide in

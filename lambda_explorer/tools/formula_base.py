@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Dict
 import sympy  # type: ignore
+from . import logger
+
 
 class Formula:
     """Base class for symbolic equations providing cached solvers."""
@@ -24,19 +26,29 @@ class Formula:
         self.vars = cls._vars
         self.eq = cls.eq
         self._solvers = cls._solvers
+        logger.debug("Initialized formula %s", cls.__name__)
 
     def solve(self, **knowns) -> float:
         total = set(self.vars.keys())
         given = set(knowns.keys())
         extras = given - total
         if extras:
-            raise ValueError(f"Unknown variable(s) provided: {', '.join(sorted(extras))}")
+            raise ValueError(
+                f"Unknown variable(s) provided: {', '.join(sorted(extras))}"
+            )
         expected = len(total) - 1
         if len(given) < expected:
             missing = sorted(total - given)
-            raise ValueError(f"{len(missing)} variable(s) missing: {', '.join(missing)}")
+            raise ValueError(
+                f"{len(missing)} variable(s) missing: {', '.join(missing)}"
+            )
         if len(given) > expected:
-            raise ValueError(f"Too many variables provided (expected {expected}, got {len(given)})")
+            raise ValueError(
+                f"Too many variables provided (expected {expected}, got {len(given)})"
+            )
         target = (total - given).pop()
         args = [knowns[name] for name in self.vars if name != target]
-        return float(self._solvers[target](*args))
+        logger.debug("Solving for %s with %s", target, knowns)
+        result = float(self._solvers[target](*args))
+        logger.verbose("%s result %s", target, result)
+        return result

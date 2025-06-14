@@ -3,8 +3,10 @@ import sympy  # type: ignore
 from typing import Dict, Type, Optional, List
 import logging
 import csv
+import coloredlogs
 import dearpygui.dearpygui as dpg
 from .. import logger
+
 # Load formula classes
 from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
 from .formula_base import Formula
@@ -25,6 +27,7 @@ def _get_next_pos() -> List[int]:
     pos = _next_pos.copy()
     _next_pos[0] += _offset
     _next_pos[1] += _offset
+    logger.debug("Next window position: %s", pos)
     return pos
 
 
@@ -51,6 +54,10 @@ log_window_tag = "logger_window"
 log_container_tag = "logger_container"
 gui_log_handler: Optional[GuiLogHandler] = None
 
+settings_window_tag = "settings_window"
+log_level_tag = "log_level_combo"
+log_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
+
 
 def setup_logger_window() -> None:  # pragma: no cover - GUI
     """Create the logging window and attach handler."""
@@ -70,13 +77,47 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
 def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
     """Display the logging window."""
     setup_logger_window()
+    logger.debug("Showing log window")
     dpg.show_item(log_window_tag)
+
+
+def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - GUI
+    """Update the global logging level from the settings window."""
+    level = str(app_data)
+    coloredlogs.set_level(level, logger=logger)
+    logger.setLevel(level)
+    logger.info("Logging level changed to %s", level)
+
+
+def show_settings_window(
+    sender=None, app_data=None, user_data=None
+):  # pragma: no cover - GUI
+    """Display the settings window allowing adjustment of options."""
+    logger.debug("Showing settings window")
+    if not dpg.does_item_exist(settings_window_tag):
+        with dpg.window(
+            label="Settings",
+            tag=settings_window_tag,
+            width=220,
+            height=90,
+            pos=_get_next_pos(),
+            show=False,
+        ):
+            dpg.add_combo(
+                log_levels,
+                label="Log Level",
+                default_value=logging.getLevelName(logger.level),
+                tag=log_level_tag,
+                callback=set_log_level_callback,
+            )
+    dpg.show_item(settings_window_tag)
 
 
 # Callback: calculate just-cleared input and then full calculation
 def calc_input_callback(sender, app_data, user_data):
     """Clear the input field and immediately recalculate the equation."""
     input_tag = user_data["input_tag"]
+    logger.debug("Calc input callback for %s", input_tag)
     dpg.set_value(input_tag, "")
     calculate_callback(sender, app_data, user_data)
 
@@ -85,6 +126,7 @@ def calc_input_callback(sender, app_data, user_data):
 def set_default_callback(sender, app_data, user_data):
     """Insert the stored default value for the given variable."""
     input_tag, var = user_data
+    logger.debug("Setting default for %s", var)
     default = default_values.get(var, "")
     dpg.set_value(input_tag, default)
 
@@ -93,7 +135,9 @@ def set_default_callback(sender, app_data, user_data):
 def pull_default_callback(sender, app_data, user_data):
     """Save the value from the input field as the new default."""
     input_tag, var = user_data
-    default_values[var] = str(dpg.get_value(input_tag))
+    value = str(dpg.get_value(input_tag))
+    default_values[var] = value
+    logger.debug("Stored default for %s: %s", var, value)
 
 
 # Callback to calculate formula from bottom button
@@ -137,6 +181,7 @@ def update_plot_inputs(sender, app_data, user_data):
     """Refresh the constant value input fields when plot variables change."""
     solver: FormulaSolver = user_data["solver"]
     eq = solver.formula
+    logger.debug("Update plot inputs for %s", eq.__class__.__name__)
     x_var = dpg.get_value(user_data["x_var_tag"])
     y_var = dpg.get_value(user_data["y_var_tag"])
     group = user_data["const_group"]
@@ -156,6 +201,7 @@ def plot_callback(sender, app_data, user_data):
     """Calculate plot data for the selected x/y variables."""
     solver: FormulaSolver = user_data["solver"]
     eq = solver.formula
+    logger.debug("Plot callback for %s", eq.__class__.__name__)
     x_var = dpg.get_value(user_data["x_var_tag"])
     y_var = dpg.get_value(user_data["y_var_tag"])
     logger.debug("Plotting %s vs %s", y_var, x_var)
@@ -199,6 +245,7 @@ def plot_callback(sender, app_data, user_data):
 def export_csv_callback(sender, app_data, user_data):
     """Export the plotted data to a CSV file."""
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
+    logger.debug("Export CSV requested: %s", path)
     xs, ys = dpg.get_value(user_data["series_tag"])
     if not path:
         logger.warning("No file selected for CSV export")
@@ -216,12 +263,14 @@ def export_csv_callback(sender, app_data, user_data):
 
 def save_defaults_callback(sender, app_data, user_data):
     """Save edited defaults from the defaults tab."""
+    logger.debug("Saving defaults from UI")
     for var, tag in user_data.items():
         default_values[var] = dpg.get_value(tag)
 
 
 def export_defaults_callback(sender, app_data, user_data):
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
+    logger.debug("Export defaults to %s", path)
     if not path:
         return
     save_defaults_callback(sender, app_data, user_data)
@@ -230,6 +279,7 @@ def export_defaults_callback(sender, app_data, user_data):
 
 def import_defaults_callback(sender, app_data, user_data):
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
+    logger.debug("Import defaults from %s", path)
     if not path:
         return
     load_defaults_file(path)
@@ -240,12 +290,14 @@ def import_defaults_callback(sender, app_data, user_data):
 
 def export_defaults_default(sender, app_data, user_data):
     """Export defaults to the standard ``defaults.yaml`` file."""
+    logger.debug("Exporting defaults to defaults.yaml")
     save_defaults_callback(sender, app_data, user_data)
     save_defaults_file("defaults.yaml")
 
 
 def import_defaults_default(sender, app_data, user_data):
     """Load defaults from the standard ``defaults.yaml`` file."""
+    logger.debug("Importing defaults from defaults.yaml")
     load_defaults_file("defaults.yaml")
     for var, tag in user_data.items():
         if var in default_values:
@@ -257,6 +309,7 @@ def open_formula_window(sender, app_data, user_data):
     """Create or show a window for the selected formula."""
     cls_name = user_data
     logger.info("Open formula window: %s", cls_name)
+    logger.debug("Creating solver and window for %s", cls_name)
     eq = formula_classes[cls_name]()
     solver = FormulaSolver(eq)
     window_tag = f"win_{cls_name}"
@@ -389,17 +442,38 @@ def open_formula_window(sender, app_data, user_data):
                 def_tags: Dict[str, str] = {}
                 for var in eq.vars:
                     tag = f"{window_tag}_def_{var}"
-                    dpg.add_input_text(label=var, tag=tag, default_value=default_values.get(var, ""))
+                    dpg.add_input_text(
+                        label=var, tag=tag, default_value=default_values.get(var, "")
+                    )
                     def_tags[var] = tag
-                dpg.add_button(label="Save", callback=export_defaults_default, user_data=def_tags)
+                dpg.add_button(
+                    label="Save", callback=export_defaults_default, user_data=def_tags
+                )
                 dpg.add_same_line()
-                dpg.add_button(label="Save As", callback=lambda s,a,u: dpg.show_item(f"{window_tag}_def_export"))
+                dpg.add_button(
+                    label="Save As",
+                    callback=lambda s, a, u: dpg.show_item(f"{window_tag}_def_export"),
+                )
                 dpg.add_same_line()
-                dpg.add_button(label="Load", callback=import_defaults_default, user_data=def_tags)
-                with dpg.file_dialog(directory_selector=False, show=False, callback=export_defaults_callback, tag=f"{window_tag}_def_export", user_data=def_tags):
-                    dpg.add_file_extension(".yaml", color=(0,255,0,255))
-                with dpg.file_dialog(directory_selector=False, show=False, callback=import_defaults_callback, tag=f"{window_tag}_def_import", user_data=def_tags):
-                    dpg.add_file_extension(".yaml", color=(0,255,0,255))
+                dpg.add_button(
+                    label="Load", callback=import_defaults_default, user_data=def_tags
+                )
+                with dpg.file_dialog(
+                    directory_selector=False,
+                    show=False,
+                    callback=export_defaults_callback,
+                    tag=f"{window_tag}_def_export",
+                    user_data=def_tags,
+                ):
+                    dpg.add_file_extension(".yaml", color=(0, 255, 0, 255))
+                with dpg.file_dialog(
+                    directory_selector=False,
+                    show=False,
+                    callback=import_defaults_callback,
+                    tag=f"{window_tag}_def_import",
+                    user_data=def_tags,
+                ):
+                    dpg.add_file_extension(".yaml", color=(0, 255, 0, 255))
 
         # initial population of constant inputs
         update_plot_inputs(None, None, plot_data)
@@ -408,6 +482,7 @@ def open_formula_window(sender, app_data, user_data):
 # Build context menu overview
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
+    logger.info("Launching Lambda Explorer GUI")
     dpg.create_context()
     dpg.configure_app(docking=True, docking_space=True)
     setup_logger_window()
@@ -432,6 +507,8 @@ def build_context_menu(width=320, height=390):
             dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)
+        dpg.add_same_line()
+        dpg.add_button(label="Settings", callback=show_settings_window)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     dpg.setup_dearpygui()
     load_layout()
@@ -444,7 +521,7 @@ def build_context_menu(width=320, height=390):
     vp_h = dpg.get_viewport_client_height()
 
     # main window (context menu) on the left
-    #dpg.set_primary_window("main_window", True)
+    # dpg.set_primary_window("main_window", True)
     dpg.set_item_pos("main_window", [10, 10])
     dpg.set_item_height("main_window", vp_h - 220)
 
@@ -456,6 +533,7 @@ def build_context_menu(width=320, height=390):
     dpg.set_exit_callback(lambda: save_layout())
     dpg.start_dearpygui()
     dpg.destroy_context()
+    logger.info("GUI closed")
 
 
 if __name__ == "__main__":
