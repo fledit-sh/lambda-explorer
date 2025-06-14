@@ -74,9 +74,7 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
     global gui_log_handler
     if gui_log_handler:
         return
-    with dpg.window(
-        label="Logs", tag=log_window_tag, width=400, height=200, show=False
-    ):
+    with dpg.window(label="Logs", tag=log_window_tag, width=400, height=200, show=False):
         with dpg.child_window(tag=log_container_tag, autosize_x=True, autosize_y=True):
             pass
     gui_log_handler = GuiLogHandler(log_container_tag)
@@ -102,9 +100,7 @@ def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - G
     logger.info("Logging level changed to %s", level)
 
 
-def show_settings_window(
-    sender=None, app_data=None, user_data=None
-):  # pragma: no cover - GUI
+def show_settings_window(sender=None, app_data=None, user_data=None):  # pragma: no cover - GUI
     """Display the settings window allowing adjustment of options."""
     logger.debug("Showing settings window")
     if not dpg.does_item_exist(settings_window_tag):
@@ -247,8 +243,15 @@ def plot_callback(sender, app_data, user_data):
         max_idx = ys.index(max(ys))
         if dpg.does_item_exist(user_data["annotation_tag"]):
             dpg.delete_item(user_data["annotation_tag"])
+        # Ensure the annotation is attached directly to the plot. Some versions
+        # of DearPyGui may return an error if the stored parent is not a plot,
+        # so verify and correct the parent before adding the annotation.
+        plot_tag = user_data["plot_tag"]
+        if dpg.get_item_type(plot_tag) != dpg.mvPlot:
+            # fall back to using the parent of the Y axis (which is the plot)
+            plot_tag = dpg.get_item_parent(user_data["axis_y_tag"])
         dpg.add_plot_annotation(
-            parent=user_data["plot_tag"],
+            parent=plot_tag,
             tag=user_data["annotation_tag"],
             default_value=(xs[max_idx], ys[max_idx]),
             label=f"max={ys[max_idx]:.2f}",
@@ -344,9 +347,7 @@ def open_formula_window(sender, app_data, user_data):
         "solver": solver,
     }
 
-    with dpg.window(
-        label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()
-    ):
+    with dpg.window(label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()):
         dpg.add_text(f"Formula: {cls_name}")
         dpg.add_text(sympy.latex(eq.eq))
         with dpg.tab_bar():
@@ -355,9 +356,7 @@ def open_formula_window(sender, app_data, user_data):
                     input_tag = f"{window_tag}_input_{var}"
                     default = default_values.get(var, "")
                     with dpg.group(horizontal=True):
-                        dpg.add_input_text(
-                            tag=input_tag, label=var, default_value=default
-                        )
+                        dpg.add_input_text(tag=input_tag, label=var, default_value=default)
                         shared_data["input_tag"] = input_tag
                         dpg.add_button(
                             label="Calc",
@@ -432,9 +431,7 @@ def open_formula_window(sender, app_data, user_data):
                 dpg.add_separator()
                 with dpg.group(tag=const_group_tag):
                     pass
-                dpg.add_button(
-                    label="Plot", callback=plot_callback, user_data=plot_data
-                )
+                dpg.add_button(label="Plot", callback=plot_callback, user_data=plot_data)
                 dpg.add_same_line()
                 dpg.add_button(
                     label="Export CSV",
@@ -457,22 +454,16 @@ def open_formula_window(sender, app_data, user_data):
                 def_tags: Dict[str, str] = {}
                 for var in eq.vars:
                     tag = f"{window_tag}_def_{var}"
-                    dpg.add_input_text(
-                        label=var, tag=tag, default_value=default_values.get(var, "")
-                    )
+                    dpg.add_input_text(label=var, tag=tag, default_value=default_values.get(var, ""))
                     def_tags[var] = tag
-                dpg.add_button(
-                    label="Save", callback=export_defaults_default, user_data=def_tags
-                )
+                dpg.add_button(label="Save", callback=export_defaults_default, user_data=def_tags)
                 dpg.add_same_line()
                 dpg.add_button(
                     label="Save As",
                     callback=lambda s, a, u: dpg.show_item(f"{window_tag}_def_export"),
                 )
                 dpg.add_same_line()
-                dpg.add_button(
-                    label="Load", callback=import_defaults_default, user_data=def_tags
-                )
+                dpg.add_button(label="Load", callback=import_defaults_default, user_data=def_tags)
                 with dpg.file_dialog(
                     directory_selector=False,
                     show=False,
@@ -516,9 +507,7 @@ def build_context_menu(width=320, height=390):
 
             # create an item handler registry to manage click events
             with dpg.item_handler_registry() as handler:
-                dpg.add_item_clicked_handler(
-                    callback=open_formula_window, user_data=name
-                )
+                dpg.add_item_clicked_handler(callback=open_formula_window, user_data=name)
             dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)
