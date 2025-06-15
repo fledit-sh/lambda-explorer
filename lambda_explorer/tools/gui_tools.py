@@ -2,10 +2,14 @@
 import sympy  # type: ignore
 from typing import Dict, Type, Optional, List, Set
 import logging
+from pathlib import Path
 import csv
 import coloredlogs
 import dearpygui.dearpygui as dpg
 from .. import logger
+
+# path to application icons
+ICON_PATH = Path(__file__).resolve().parent.parent / "logo" / "favicon.ico"
 
 # Load formula classes
 from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
@@ -514,6 +518,14 @@ def build_context_menu(width=320, height=390):
         dpg.add_same_line()
         dpg.add_button(label="Settings", callback=show_settings_window)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
+    if ICON_PATH.exists():
+        try:
+            dpg.set_viewport_small_icon(str(ICON_PATH))
+            dpg.set_viewport_large_icon(str(ICON_PATH))
+        except Exception as exc:  # pragma: no cover - GUI
+            logger.warning("Failed to set viewport icon: %s", exc)
+    else:
+        logger.debug("Icon file not found: %s", ICON_PATH)
     dpg.setup_dearpygui()
     load_layout()
     dpg.show_viewport()
