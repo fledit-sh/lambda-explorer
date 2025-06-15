@@ -31,6 +31,17 @@ def _gather_formulas(cls: Type[Formula]) -> Set[Type[Formula]]:
 
 
 formula_classes = {cls.__name__: cls for cls in _gather_formulas(Formula)}
+# Custom formulas created at runtime
+custom_formula_classes: Dict[str, Type[Formula]] = {}
+
+
+def _create_formula_class(name: str, var_names: List[str], eq: sympy.Eq) -> Type[Formula]:
+    """Return a new Formula subclass for the given equation."""
+
+    def __init__(self) -> None:
+        Formula.__init__(self, var_names, eq)
+
+    return type(name, (Formula,), {"variables": var_names, "__init__": __init__})
 
 # simple helper for cascading window placement
 _next_pos = [20, 20]
@@ -124,6 +135,90 @@ def show_settings_window(sender=None, app_data=None, user_data=None):  # pragma:
                 callback=set_log_level_callback,
             )
     dpg.show_item(settings_window_tag)
+
+
+def _add_formula_to_overview(name: str) -> None:
+    """Insert a formula entry into the overview window."""
+    item_tag = f"item_{name}"
+    dpg.add_text(name, tag=item_tag, parent="main_window")
+    with dpg.item_handler_registry() as handler:
+        dpg.add_item_clicked_handler(callback=open_formula_window, user_data=name)
+    dpg.bind_item_handler_registry(item_tag, handler)
+
+
+def _create_formula_callback(sender, app_data, user_data):
+    """Create a custom formula from editor inputs."""
+    name = dpg.get_value(user_data["name"]).strip()
+    vars_raw = dpg.get_value(user_data["vars"])
+    expr_text = dpg.get_value(user_data["expr"])
+    delete_combo = user_data["delete_combo"]
+    if not name or not vars_raw or not expr_text:
+        logger.error("All fields must be filled")
+        return
+    if name in formula_classes:
+        logger.error("Formula %s already exists", name)
+        return
+    var_names = [v.strip() for v in vars_raw.split(",") if v.strip()]
+    symbols = sympy.symbols(" ".join(var_names))
+    sym_dict = dict(zip(var_names, symbols))
+    try:
+        expr = sympy.sympify(expr_text, locals=sym_dict)
+    except Exception as exc:
+        logger.error("Invalid expression: %s", exc)
+        return
+    eq = sympy.Eq(sym_dict[var_names[0]], expr)
+    cls = _create_formula_class(name, var_names, eq)
+    formula_classes[name] = cls
+    custom_formula_classes[name] = cls
+    for v in var_names:
+        default_values.setdefault(v, "")
+    _add_formula_to_overview(name)
+    dpg.configure_item(delete_combo, items=list(custom_formula_classes))
+    logger.info("Added custom formula %s", name)
+
+
+def _delete_formula_callback(sender, app_data, user_data):
+    """Remove a custom formula and its window."""
+    combo_tag = user_data
+    name = dpg.get_value(combo_tag)
+    if not name:
+        return
+    if name not in custom_formula_classes:
+        return
+    formula_classes.pop(name, None)
+    custom_formula_classes.pop(name, None)
+    window_tag = f"win_{name}"
+    item_tag = f"item_{name}"
+    if dpg.does_item_exist(window_tag):
+        dpg.delete_item(window_tag)
+    if dpg.does_item_exist(item_tag):
+        dpg.delete_item(item_tag)
+    dpg.configure_item(combo_tag, items=list(custom_formula_classes))
+    logger.info("Deleted custom formula %s", name)
+
+
+def show_formula_editor(sender=None, app_data=None, user_data=None):
+    """Display the formula editor window."""
+    tag = "formula_editor"
+    if dpg.does_item_exist(tag):
+        dpg.show_item(tag)
+        return
+    with dpg.window(label="Formula Editor", tag=tag, width=400, height=220, pos=_get_next_pos()):
+        name_tag = "fe_name"
+        vars_tag = "fe_vars"
+        expr_tag = "fe_expr"
+        delete_combo = "fe_delete"
+        dpg.add_input_text(label="Name", tag=name_tag)
+        dpg.add_input_text(label="Variables", tag=vars_tag, hint="comma separated")
+        dpg.add_input_text(label="Expression", tag=expr_tag, hint="for first variable")
+        dpg.add_button(
+            label="Add", callback=_create_formula_callback,
+            user_data={"name": name_tag, "vars": vars_tag, "expr": expr_tag, "delete_combo": delete_combo}
+        )
+        dpg.add_separator()
+        dpg.add_combo(list(custom_formula_classes), label="Delete", tag=delete_combo)
+        dpg.add_button(label="Delete", callback=_delete_formula_callback, user_data=delete_combo)
+    dpg.show_item(tag)
 
 
 # Callback: calculate just-cleared input and then full calculation
@@ -517,6 +612,8 @@ def build_context_menu(width=320, height=390):
         dpg.add_button(label="View logs", callback=show_log_window)
         dpg.add_same_line()
         dpg.add_button(label="Settings", callback=show_settings_window)
+        dpg.add_same_line()
+        dpg.add_button(label="Formula Editor", callback=show_formula_editor)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     if ICON_PATH.exists():
         try:
