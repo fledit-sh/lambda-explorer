@@ -312,6 +312,21 @@ def plot_callback(sender, app_data, user_data):
     start = float(dpg.get_value(user_data["x_start"]))
     end = float(dpg.get_value(user_data["x_end"]))
     step = float(dpg.get_value(user_data["x_step"]))
+
+    if step <= 0:
+        logger.error("Step must be positive, got %s", step)
+        return
+
+    max_points = 10000
+    num_points = int(max(0, (end - start) / step)) + 1
+    if num_points > max_points:
+        logger.warning(
+            "Requested %d points exceeds limit of %d; truncating",
+            num_points,
+            max_points,
+        )
+        end = start + step * (max_points - 1)
+        num_points = max_points
     consts = {}
     for var, tag in user_data["const_tags"].items():
         val = dpg.get_value(tag)
@@ -322,7 +337,7 @@ def plot_callback(sender, app_data, user_data):
     xs: List[float] = []
     ys: List[float] = []
     x = start
-    while x <= end:
+    for _ in range(num_points):
         knowns = consts.copy()
         knowns[x_var] = x
         try:
