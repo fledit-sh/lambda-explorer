@@ -70,9 +70,19 @@ for cls in formula_classes.values():
         default_values.setdefault(var, "")
 load_defaults_file()
 
+# Mapping of log level names to Dear PyGui colours
+LOG_COLORS = {
+    "DEBUG": [150, 150, 150, 255],
+    "VERBOSE": [180, 180, 180, 255],
+    "INFO": [255, 255, 255, 255],
+    "WARNING": [255, 255, 0, 255],
+    "ERROR": [255, 0, 0, 255],
+    "CRITICAL": [255, 0, 0, 255],
+}
+
 
 class GuiLogHandler(logging.Handler):
-    """Logging handler that writes records into a Dear PyGui window."""
+    """Logging handler that writes coloured records to a Dear PyGui window."""
 
     @log_calls
     def __init__(self, target: str) -> None:
@@ -82,7 +92,8 @@ class GuiLogHandler(logging.Handler):
     @log_calls
     def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover - GUI
         msg = self.format(record)
-        dpg.add_text(msg, parent=self.target)
+        color = LOG_COLORS.get(record.levelname, [255, 255, 255, 255])
+        dpg.add_text(msg, parent=self.target, color=color)
 
 
 log_window_tag = "logger_window"
