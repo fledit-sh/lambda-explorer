@@ -6,7 +6,7 @@ from pathlib import Path
 import csv
 import coloredlogs
 import dearpygui.dearpygui as dpg
-from .. import logger
+from .. import logger, log_calls
 
 # path to application icons
 ICON_PATH = Path(__file__).resolve().parent.parent / "logo" / "favicon.ico"
