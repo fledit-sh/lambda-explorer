@@ -71,8 +71,9 @@ any formula window to load or save the `defaults.yaml` file directly, or choose
 variable names to their stored string values.
 
 The application also remembers your window layout. When you close the GUI, the
-current positions and sizes of all windows are written to `layout.ini` and
-restored on the next start.
+current positions and sizes of all windows are written to `layout.ini` and the
+list of visible windows is stored in `open_windows.json`. Both the layout and
+open windows are restored on the next start.
 
 The *Settings* window lets you adjust the logging level of the application at
 runtime. Choose between `DEBUG`, `INFO`, `WARNING` and `ERROR` to control the
