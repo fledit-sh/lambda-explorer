@@ -47,14 +47,26 @@ def _get_next_pos() -> List[int]:
 @log_calls
 def create_latex_texture(latex: str) -> str:
     """Render LaTeX text to a Dear PyGui texture."""
-    fig, ax = plt.subplots(dpi=200)
-    ax.text(0.0, 0.0, latex)
-    ax.set_axis_off()
-    fig.subplots_adjust(0.0, 0.0, 1.0, 1.0, 0.0, 0.0)
+    fig, ax = plt.subplots(figsize=(0.01, 0.01), dpi=300)
+    fig.patch.set_alpha(0.0)
+    ax.axis("off")
+    text = ax.text(0.0, 0.0, f"${latex}$", color="white", ha="left", va="bottom")
+
     canvas = FigureCanvasAgg(fig)
     canvas.draw()
-    buffer = np.asarray(canvas.buffer_rgba(), dtype=np.float32) / 255.0
+    renderer = canvas.get_renderer()
+    bbox = text.get_window_extent(renderer)
+
+    buf = np.asarray(canvas.buffer_rgba(), dtype=np.float32)
+    h_total, w_total = buf.shape[0], buf.shape[1]
+    top = int(h_total - bbox.y1)
+    bottom = int(h_total - bbox.y0)
+    left = int(bbox.x0)
+    right = int(bbox.x1)
+    buf = buf[top:bottom, left:right, :]
+    buffer = buf / 255.0
     width, height = buffer.shape[1], buffer.shape[0]
+
     tag = f"tex_{dpg.generate_uuid()}"
     with dpg.texture_registry(show=False):
         dpg.add_raw_texture(
