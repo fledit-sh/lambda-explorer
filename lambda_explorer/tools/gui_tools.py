@@ -6,7 +6,9 @@ from pathlib import Path
 import csv
 import coloredlogs
 import dearpygui.dearpygui as dpg
+import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from .. import logger, log_calls
