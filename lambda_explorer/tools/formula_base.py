@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Callable, Dict
+
 import sympy  # type: ignore
+
 from . import logger, log_calls
 
 
@@ -24,9 +26,14 @@ class Formula:
             cls.variables = var_names
             cls._solvers = {}
             for target, symbol in cls._vars.items():
-                sols = sympy.solve(eq, symbol)
+                try:
+                    sols = sympy.solve(eq, symbol)
+                except Exception as exc:  # pragma: no cover - SymPy specific
+                    logger.info("Unable to solve for %s: %s", target, exc)
+                    continue
                 if not sols:
-                    raise ValueError(f"No solution for {target}")
+                    logger.info("No solution for %s", target)
+                    continue
                 args = [v for n, v in cls._vars.items() if n != target]
                 # Use Python's ``math`` module for lightweight numerical
                 # evaluation to avoid importing ``numpy`` which adds
@@ -56,8 +63,11 @@ class Formula:
                 f"Too many variables provided (expected {expected}, got {len(given)})"
             )
         target = (total - given).pop()
+        solver = self._solvers.get(target)
+        if not solver:
+            raise ValueError(f"No solver available for {target}")
         args = [knowns[name] for name in self.vars if name != target]
         logger.debug("Solving for %s with %s", target, knowns)
-        result = float(self._solvers[target](*args))
+        result = float(solver(*args))
         logger.verbose("%s result %s", target, result)
         return result
