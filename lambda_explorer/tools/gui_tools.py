@@ -8,6 +8,7 @@ import coloredlogs
 import dearpygui.dearpygui as dpg
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,7 +48,7 @@ def _get_next_pos() -> List[int]:
 @log_calls
 def create_latex_texture(latex: str) -> str:
     """Render LaTeX text to a Dear PyGui texture."""
-    fig, ax = plt.subplots(figsize=(0.01, 0.01), dpi=300)
+    fig, ax = plt.subplots(figsize=(1.0, 1.0), dpi=300)
     fig.patch.set_alpha(0.0)
     ax.axis("off")
     text = ax.text(0.0, 0.0, f"${latex}$", color="white", ha="left", va="bottom")
@@ -59,10 +60,10 @@ def create_latex_texture(latex: str) -> str:
 
     buf = np.asarray(canvas.buffer_rgba(), dtype=np.float32)
     h_total, w_total = buf.shape[0], buf.shape[1]
-    top = int(h_total - bbox.y1)
-    bottom = int(h_total - bbox.y0)
-    left = int(bbox.x0)
-    right = int(bbox.x1)
+    top = max(int(h_total - bbox.y1), 0)
+    bottom = min(int(h_total - bbox.y0), h_total)
+    left = max(int(bbox.x0), 0)
+    right = min(int(bbox.x1), w_total)
     buf = buf[top:bottom, left:right, :]
     buffer = buf / 255.0
     width, height = buffer.shape[1], buffer.shape[0]
