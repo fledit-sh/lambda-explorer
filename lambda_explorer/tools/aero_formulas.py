@@ -37,10 +37,7 @@ class KinematicViscosity(Formula):
         eq = sympy.Eq(nu, mu / rho)
         super().__init__(self.variables, eq)
 
-class ReEquation(ReynoldsNumber):
-    """Alias for Reynolds number equation."""
-
-class LiftEquation(Formula):
+class AerodynamicLift(Formula):
     """L = 0.5 * rho * V**2 * S * Cl"""
     variables = ["L", "rho", "V", "S", "Cl"]
 
@@ -50,7 +47,7 @@ class LiftEquation(Formula):
         super().__init__(self.variables, eq)
 
 
-class DragEquation(Formula):
+class AerodynamicDrag(Formula):
     """D = 0.5 * rho * V**2 * S * Cd"""
     variables = ["D", "rho", "V", "S", "Cd"]
 
@@ -60,7 +57,7 @@ class DragEquation(Formula):
         super().__init__(self.variables, eq)
 
 
-class MomentEquation(Formula):
+class AerodynamicMoment(Formula):
     """M = 0.5 * rho * V**2 * S * c * Cm"""
     variables = ["M", "rho", "V", "S", "c", "Cm"]
 
@@ -217,3 +214,184 @@ class FirstCellSpacing(Formula):
         self.vars = cls._vars
         self.eq = cls.eq
         self._solvers = cls._solvers
+
+
+# ----------------------------------------------------------------------------
+# Thermodynamic Fundamentals
+# ----------------------------------------------------------------------------
+
+class IdealGasLaw(Formula):
+    """p = ρ * R * T"""
+    variables = ["p", "rho", "R", "T"]
+
+    def __init__(self):
+        p, rho, R, T = sympy.symbols("p rho R T")
+        eq = sympy.Eq(p, rho * R * T)
+        super().__init__(self.variables, eq)
+
+
+class AdiabaticPressureVolume(Formula):
+    """p * v^κ = C (constant)"""
+    variables = ["p", "v", "kappa", "C"]
+
+    def __init__(self):
+        p, v, kappa, C = sympy.symbols("p v kappa C")
+        eq = sympy.Eq(p * v ** kappa, C)
+        super().__init__(self.variables, eq)
+
+
+class AdiabaticTemperatureVolume(Formula):
+    """T * v^{κ−1} = C (constant)"""
+    variables = ["T", "v", "kappa", "C"]
+
+    def __init__(self):
+        T, v, kappa, C = sympy.symbols("T v kappa C")
+        eq = sympy.Eq(T * v ** (kappa - 1), C)
+        super().__init__(self.variables, eq)
+
+
+class AdiabaticTemperaturePressure(Formula):
+    """T * p^{(1−κ)/κ} = C (constant)"""
+    variables = ["T", "p", "kappa", "C"]
+
+    def __init__(self):
+        T, p, kappa, C = sympy.symbols("T p kappa C")
+        exponent = (1 - kappa) / kappa
+        eq = sympy.Eq(T * p ** exponent, C)
+        super().__init__(self.variables, eq)
+
+
+# ----------------------------------------------------------------------------
+# Isentropic Flow Relations (Mach‑dependent)
+# ----------------------------------------------------------------------------
+
+class MachTemperatureRatio(Formula):
+    """T / T0 = 1 + (κ−1)/2 · Ma²"""
+    variables = ["T", "T0", "kappa", "Ma"]
+
+    def __init__(self):
+        T, T0, kappa, Ma = sympy.symbols("T T0 kappa Ma")
+        eq = sympy.Eq(T / T0, 1 + (kappa - 1) / 2 * Ma ** 2)
+        super().__init__(self.variables, eq)
+
+
+class MachPressureRatio(Formula):
+    """p / p0 = (1 + (κ−1)/2 · Ma²)^{−κ/(κ−1)}"""
+    variables = ["p", "p0", "kappa", "Ma"]
+
+    def __init__(self):
+        p, p0, kappa, Ma = sympy.symbols("p p0 kappa Ma")
+        eq = sympy.Eq(p / p0, (1 + (kappa - 1) / 2 * Ma ** 2) ** (-kappa / (kappa - 1)))
+        super().__init__(self.variables, eq)
+
+
+class MachDensityRatio(Formula):
+    """ρ / ρ0 = (1 + (κ−1)/2 · Ma²)^{−1/(κ−1)}"""
+    variables = ["rho", "rho0", "kappa", "Ma"]
+
+    def __init__(self):
+        rho, rho0, kappa, Ma = sympy.symbols("rho rho0 kappa Ma")
+        eq = sympy.Eq(rho / rho0, (1 + (kappa - 1) / 2 * Ma ** 2) ** (-1 / (kappa - 1)))
+        super().__init__(self.variables, eq)
+
+
+# ----------------------------------------------------------------------------
+# Energy Relation
+# ----------------------------------------------------------------------------
+
+class EnergyEquation(Formula):
+    """w² / 2 = h₀ − h"""
+    variables = ["w", "h0", "h"]
+
+    def __init__(self):
+        w, h0, h = sympy.symbols("w h0 h")
+        eq = sympy.Eq(w ** 2 / 2, h0 - h)
+        super().__init__(self.variables, eq)
+
+
+# ----------------------------------------------------------------------------
+# Thrust & Performance Metrics
+# ----------------------------------------------------------------------------
+
+class ThrustEquation(Formula):
+    """F = ṁ · w_e + (p_e − p_a) · A_e"""
+    variables = ["F", "mdot", "w_e", "p_e", "p_a", "A_e"]
+
+    def __init__(self):
+        F, mdot, w_e, p_e, p_a, A_e = sympy.symbols("F mdot w_e p_e p_a A_e")
+        eq = sympy.Eq(F, mdot * w_e + (p_e - p_a) * A_e)
+        super().__init__(self.variables, eq)
+
+
+class EffectiveExhaustVelocity(Formula):
+    """c_e = w_e + (p_e − p_a) · A_e / ṁ"""
+    variables = ["c_e", "w_e", "p_e", "p_a", "A_e", "mdot"]
+
+    def __init__(self):
+        c_e, w_e, p_e, p_a, A_e, mdot = sympy.symbols("c_e w_e p_e p_a A_e mdot")
+        eq = sympy.Eq(c_e, w_e + (p_e - p_a) * A_e / mdot)
+        super().__init__(self.variables, eq)
+
+
+class SpecificImpulse(Formula):
+    """I_sp = F / (ṁ · g₀)"""
+    variables = ["I_sp", "F", "mdot", "g0"]
+
+    def __init__(self):
+        I_sp, F, mdot, g0 = sympy.symbols("I_sp F mdot g0")
+        eq = sympy.Eq(I_sp, F / (mdot * g0))
+        super().__init__(self.variables, eq)
+
+
+class ThrustCoefficient(Formula):
+    """c_F = F / (p₀ · A_t)"""
+    variables = ["c_F", "F", "p0", "A_t"]
+
+    def __init__(self):
+        c_F, F, p0, A_t = sympy.symbols("c_F F p0 A_t")
+        eq = sympy.Eq(c_F, F / (p0 * A_t))
+        super().__init__(self.variables, eq)
+
+
+class MassFlowRate(Formula):
+    """ṁ = (p₀ · A_t / √(R · T₀)) · Γ(κ)"""
+    variables = ["mdot", "p0", "A_t", "R", "T0", "Gamma"]
+
+    def __init__(self):
+        mdot, p0, A_t, R, T0, Gamma = sympy.symbols("mdot p0 A_t R T0 Gamma")
+        eq = sympy.Eq(mdot, (p0 * A_t / sympy.sqrt(R * T0)) * Gamma)
+        super().__init__(self.variables, eq)
+
+
+# ----------------------------------------------------------------------------
+# Auxiliary Functions
+# ----------------------------------------------------------------------------
+
+class GammaFunction(Formula):
+    """Γ(κ) = √κ · (2 / (κ + 1))^{(κ + 1)/(2(κ − 1))}"""
+    variables = ["Gamma", "kappa"]
+
+    def __init__(self):
+        Gamma, kappa = sympy.symbols("Gamma kappa")
+        eq = sympy.Eq(Gamma, sympy.sqrt(kappa) * (2 / (kappa + 1)) ** ((kappa + 1) / (2 * (kappa - 1))))
+        super().__init__(self.variables, eq)
+
+
+class CharacteristicLength(Formula):
+    """L* = V₀ / A_t"""
+    variables = ["L_star", "V0", "A_t"]
+
+    def __init__(self):
+        L_star, V0, A_t = sympy.symbols("L_star V0 A_t")
+        eq = sympy.Eq(L_star, V0 / A_t)
+        super().__init__(self.variables, eq)
+
+
+class CharacteristicVelocity(Formula):
+    """c* = √(R · T₀) / Γ(κ)"""
+    variables = ["c_star", "R", "T0", "Gamma"]
+
+    def __init__(self):
+        c_star, R, T0, Gamma = sympy.symbols("c_star R T0 Gamma")
+        eq = sympy.Eq(c_star, sympy.sqrt(R * T0) / Gamma)
+        super().__init__(self.variables, eq)
