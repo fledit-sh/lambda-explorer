@@ -84,7 +84,7 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
 
 
 @log_calls
-def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
+def show_log_window(sender=None, app_data=None, user_data=None):  # pragma: no cover - GUI
     """Display the logging window."""
     setup_logger_window()
     logger.debug("Showing log window")
