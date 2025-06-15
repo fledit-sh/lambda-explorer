@@ -2,3 +2,6 @@ build/
 lambda_explorer.egg-info/
 __pycache__/
 *.py[cod]
+
+# GUI window state
+open_windows.json
