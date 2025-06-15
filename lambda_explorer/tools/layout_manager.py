@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 import dearpygui.dearpygui as dpg
-from . import logger
+from . import logger, log_calls
 
 LAYOUT_FILE = "layout.ini"
 
 
+@log_calls
 def load_layout(path: str = LAYOUT_FILE) -> None:
     """Load window layout from an ini file if it exists."""
     logger.debug("Loading layout from %s", path)
@@ -18,6 +19,7 @@ def load_layout(path: str = LAYOUT_FILE) -> None:
             logger.warning("Could not load layout: %s", exc)
 
 
+@log_calls
 def save_layout(path: str = LAYOUT_FILE) -> None:
     """Save current window layout to an ini file."""
     logger.debug("Saving layout to %s", path)

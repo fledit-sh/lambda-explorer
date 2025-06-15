@@ -1,6 +1,6 @@
 # gui_tools.py
 import sympy  # type: ignore
-from typing import Dict, Type, Optional, List, Set
+from typing import Dict, Type, Optional, List
 import logging
 from pathlib import Path
 import csv
@@ -15,39 +15,22 @@ ICON_PATH = Path(__file__).resolve().parent.parent / "logo" / "favicon.ico"
 from .aero_formulas import ReynoldsNumber, DynamicViscosity, KinematicViscosity
 from .interpolation_formula import ExampleIcingEquation
 from .formula_base import Formula
+from .formula_registry import formula_registry
 from .solver import FormulaSolver
 from .default_manager import default_values, load_defaults_file, save_defaults_file
 from .layout_manager import load_layout, save_layout, LAYOUT_FILE
 
 
-# Discover all Formula subclasses recursively, skipping abstract bases
-def _gather_formulas(cls: Type[Formula]) -> Set[Type[Formula]]:
-    found: Set[Type[Formula]] = set()
-    for sub in cls.__subclasses__():
-        if getattr(sub, "variables", []):
-            found.add(sub)
-        found.update(_gather_formulas(sub))
-    return found
-
-
-formula_classes = {cls.__name__: cls for cls in _gather_formulas(Formula)}
-# Custom formulas created at runtime
-custom_formula_classes: Dict[str, Type[Formula]] = {}
-
-
-def _create_formula_class(name: str, var_names: List[str], eq: sympy.Eq) -> Type[Formula]:
-    """Return a new Formula subclass for the given equation."""
-
-    def __init__(self) -> None:
-        Formula.__init__(self, var_names, eq)
-
-    return type(name, (Formula,), {"variables": var_names, "__init__": __init__})
+# Use a central registry to manage available formulas
+formula_classes = formula_registry.formula_classes
+custom_formula_classes = formula_registry.custom_formula_classes
 
 # simple helper for cascading window placement
 _next_pos = [20, 20]
 _offset = 30
 
 
+@log_calls
 def _get_next_pos() -> List[int]:
     pos = _next_pos.copy()
     _next_pos[0] += _offset
@@ -66,10 +49,12 @@ load_defaults_file()
 class GuiLogHandler(logging.Handler):
     """Logging handler that writes records into a Dear PyGui window."""
 
+    @log_calls
     def __init__(self, target: str) -> None:
         super().__init__()
         self.target = target
 
+    @log_calls
     def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover - GUI
         msg = self.format(record)
         dpg.add_text(msg, parent=self.target)
@@ -84,6 +69,7 @@ log_level_tag = "log_level_combo"
 log_levels = ["DEBUG", "INFO", "WARNING", "ERROR"]
 
 
+@log_calls
 def setup_logger_window() -> None:  # pragma: no cover - GUI
     """Create the logging window and attach handler."""
     global gui_log_handler
@@ -97,6 +83,7 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
     logger.addHandler(gui_log_handler)
 
 
+@log_calls
 def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
     """Display the logging window."""
     setup_logger_window()
@@ -104,6 +91,7 @@ def show_log_window(sender, app_data, user_data):  # pragma: no cover - GUI
     dpg.show_item(log_window_tag)
 
 
+@log_calls
 def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - GUI
     """Update the global logging level from the settings window."""
     level = str(app_data)
@@ -115,6 +103,7 @@ def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - G
     logger.info("Logging level changed to %s", level)
 
 
+@log_calls
 def show_settings_window(sender=None, app_data=None, user_data=None):  # pragma: no cover - GUI
     """Display the settings window allowing adjustment of options."""
     logger.debug("Showing settings window")
@@ -137,6 +126,7 @@ def show_settings_window(sender=None, app_data=None, user_data=None):  # pragma:
     dpg.show_item(settings_window_tag)
 
 
+@log_calls
 def _add_formula_to_overview(name: str) -> None:
     """Insert a formula entry into the overview window."""
     item_tag = f"item_{name}"
@@ -146,6 +136,7 @@ def _add_formula_to_overview(name: str) -> None:
     dpg.bind_item_handler_registry(item_tag, handler)
 
 
+@log_calls
 def _create_formula_callback(sender, app_data, user_data):
     """Create a custom formula from editor inputs."""
     name = dpg.get_value(user_data["name"]).strip()
@@ -167,9 +158,7 @@ def _create_formula_callback(sender, app_data, user_data):
         logger.error("Invalid expression: %s", exc)
         return
     eq = sympy.Eq(sym_dict[var_names[0]], expr)
-    cls = _create_formula_class(name, var_names, eq)
-    formula_classes[name] = cls
-    custom_formula_classes[name] = cls
+    cls = formula_registry.create_formula(name, var_names, eq)
     for v in var_names:
         default_values.setdefault(v, "")
     _add_formula_to_overview(name)
@@ -177,6 +166,7 @@ def _create_formula_callback(sender, app_data, user_data):
     logger.info("Added custom formula %s", name)
 
 
+@log_calls
 def _delete_formula_callback(sender, app_data, user_data):
     """Remove a custom formula and its window."""
     combo_tag = user_data
@@ -185,8 +175,7 @@ def _delete_formula_callback(sender, app_data, user_data):
         return
     if name not in custom_formula_classes:
         return
-    formula_classes.pop(name, None)
-    custom_formula_classes.pop(name, None)
+    formula_registry.delete_formula(name)
     window_tag = f"win_{name}"
     item_tag = f"item_{name}"
     if dpg.does_item_exist(window_tag):
@@ -197,6 +186,7 @@ def _delete_formula_callback(sender, app_data, user_data):
     logger.info("Deleted custom formula %s", name)
 
 
+@log_calls
 def show_formula_editor(sender=None, app_data=None, user_data=None):
     """Display the formula editor window."""
     tag = "formula_editor"
@@ -222,6 +212,7 @@ def show_formula_editor(sender=None, app_data=None, user_data=None):
 
 
 # Callback: calculate just-cleared input and then full calculation
+@log_calls
 def calc_input_callback(sender, app_data, user_data):
     """Clear the input field and immediately recalculate the equation."""
     input_tag = user_data["input_tag"]
@@ -231,6 +222,7 @@ def calc_input_callback(sender, app_data, user_data):
 
 
 # Callback to set default into input
+@log_calls
 def set_default_callback(sender, app_data, user_data):
     """Insert the stored default value for the given variable."""
     input_tag, var = user_data
@@ -240,6 +232,7 @@ def set_default_callback(sender, app_data, user_data):
 
 
 # Callback to store the current input as default
+@log_calls
 def pull_default_callback(sender, app_data, user_data):
     """Save the value from the input field as the new default."""
     input_tag, var = user_data
@@ -249,6 +242,7 @@ def pull_default_callback(sender, app_data, user_data):
 
 
 # Callback to calculate formula from bottom button
+@log_calls
 def calculate_callback(sender, app_data, user_data):
     """Solve the equation with the values entered by the user."""
     solver: FormulaSolver = user_data["solver"]
@@ -285,6 +279,7 @@ def calculate_callback(sender, app_data, user_data):
 
 
 # Helper to update constant input fields for plotting
+@log_calls
 def update_plot_inputs(sender, app_data, user_data):
     """Refresh the constant value input fields when plot variables change."""
     solver: FormulaSolver = user_data["solver"]
@@ -305,6 +300,7 @@ def update_plot_inputs(sender, app_data, user_data):
 
 
 # Callback to compute and display plot data
+@log_calls
 def plot_callback(sender, app_data, user_data):
     """Calculate plot data for the selected x/y variables."""
     solver: FormulaSolver = user_data["solver"]
@@ -357,6 +353,7 @@ def plot_callback(sender, app_data, user_data):
         )
 
 
+@log_calls
 def export_csv_callback(sender, app_data, user_data):
     """Export the plotted data to a CSV file."""
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
@@ -376,6 +373,7 @@ def export_csv_callback(sender, app_data, user_data):
         logger.error("Failed to export CSV: %s", exc)
 
 
+@log_calls
 def save_defaults_callback(sender, app_data, user_data):
     """Save edited defaults from the defaults tab."""
     logger.debug("Saving defaults from UI")
@@ -383,6 +381,7 @@ def save_defaults_callback(sender, app_data, user_data):
         default_values[var] = dpg.get_value(tag)
 
 
+@log_calls
 def export_defaults_callback(sender, app_data, user_data):
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
     logger.debug("Export defaults to %s", path)
@@ -392,6 +391,7 @@ def export_defaults_callback(sender, app_data, user_data):
     save_defaults_file(path)
 
 
+@log_calls
 def import_defaults_callback(sender, app_data, user_data):
     path = app_data.get("file_path_name") if isinstance(app_data, dict) else None
     logger.debug("Import defaults from %s", path)
@@ -403,6 +403,7 @@ def import_defaults_callback(sender, app_data, user_data):
             dpg.set_value(tag, default_values[var])
 
 
+@log_calls
 def export_defaults_default(sender, app_data, user_data):
     """Export defaults to the standard ``defaults.yaml`` file."""
     logger.debug("Exporting defaults to defaults.yaml")
@@ -410,6 +411,7 @@ def export_defaults_default(sender, app_data, user_data):
     save_defaults_file("defaults.yaml")
 
 
+@log_calls
 def import_defaults_default(sender, app_data, user_data):
     """Load defaults from the standard ``defaults.yaml`` file."""
     logger.debug("Importing defaults from defaults.yaml")
@@ -420,6 +422,7 @@ def import_defaults_default(sender, app_data, user_data):
 
 
 # Open per-formula window
+@log_calls
 def open_formula_window(sender, app_data, user_data):
     """Create or show a window for the selected formula."""
     cls_name = user_data
@@ -585,6 +588,7 @@ def open_formula_window(sender, app_data, user_data):
 
 
 # Build context menu overview
+@log_calls
 def build_context_menu(width=320, height=390):
     """Open the main window showing all available formulas."""
     logger.info("Launching Lambda Explorer GUI")
@@ -600,14 +604,18 @@ def build_context_menu(width=320, height=390):
         pos=_get_next_pos(),
     ):
         dpg.add_text("Click formulas to open")
-        for name in formula_classes:
-            item_tag = f"item_{name}"
-            dpg.add_text(name, tag=item_tag)
+        topics = formula_registry.formulas_by_topic()
+        for topic in sorted(topics):
+            dpg.add_separator()
+            dpg.add_text(topic, color=[255, 255, 0])
+            for name in topics[topic]:
+                item_tag = f"item_{name}"
+                dpg.add_text(name, tag=item_tag)
 
-            # create an item handler registry to manage click events
-            with dpg.item_handler_registry() as handler:
-                dpg.add_item_clicked_handler(callback=open_formula_window, user_data=name)
-            dpg.bind_item_handler_registry(item_tag, handler)
+                # create an item handler registry to manage click events
+                with dpg.item_handler_registry() as handler:
+                    dpg.add_item_clicked_handler(callback=open_formula_window, user_data=name)
+                dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)
         dpg.add_same_line()

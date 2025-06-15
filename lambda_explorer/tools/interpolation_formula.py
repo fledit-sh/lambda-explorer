@@ -4,9 +4,10 @@ from typing import Dict, Tuple, List
 import sympy  # type: ignore
 
 from .formula_base import Formula
-from . import logger
+from . import logger, log_calls
 
 
+@log_calls
 def _linear_interpolate(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
     """Return linearly interpolated value."""
     logger.debug(
@@ -30,6 +31,7 @@ class InterpolatedTableFormula(Formula):
     _distances: List[float] = []
     _initialized = False
 
+    @log_calls
     def __init__(self) -> None:
         cls = self.__class__
         if not cls._initialized:
@@ -45,6 +47,7 @@ class InterpolatedTableFormula(Formula):
         logger.debug("Initialized interpolated formula %s", cls.__name__)
 
     @classmethod
+    @log_calls
     def _interp_distance(
         cls, values: List[float], distance: float
     ) -> float:
@@ -64,6 +67,7 @@ class InterpolatedTableFormula(Formula):
         raise ValueError("Distance interpolation failed")
 
     @classmethod
+    @log_calls
     def interpolate(cls, temp: float, mvd: float, distance: float) -> float:
         """Interpolate the table for a specific temperature, MVD and distance."""
         logger.debug(
@@ -77,6 +81,7 @@ class InterpolatedTableFormula(Formula):
         values = cls._table[temp][mvd]
         return cls._interp_distance(values, distance)
 
+    @log_calls
     def solve(self, **knowns) -> float:
         expected = set(self.variables)
         provided = set(knowns)
@@ -101,6 +106,8 @@ class InterpolatedTableFormula(Formula):
 
 class ExampleIcingEquation(InterpolatedTableFormula):
     """Lookup values from icing table with interpolation across distance."""
+
+    topic = "Icing"
 
     variables = ["icing", "distance", "temp", "mvd"]
 
