@@ -47,8 +47,11 @@ def _get_next_pos() -> List[int]:
 
 @log_calls
 def create_latex_texture(latex: str) -> str:
-    """Render LaTeX text to a Dear PyGui texture."""
-    fig, ax = plt.subplots(figsize=(1.0, 1.0), dpi=300)
+    """Render LaTeX text to a Dear PyGui texture.
+
+    The canvas width was increased to prevent long formulas from being cut off.
+    """
+    fig, ax = plt.subplots(figsize=(3.0, 1.0), dpi=300)
     fig.patch.set_alpha(0.0)
     ax.axis("off")
     text = ax.text(0.0, 0.0, f"${latex}$", color="white", ha="left", va="bottom")
