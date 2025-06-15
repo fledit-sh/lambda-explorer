@@ -25,6 +25,7 @@ from .formula_registry import formula_registry
 from .solver import FormulaSolver
 from .default_manager import default_values, load_defaults_file, save_defaults_file
 from .layout_manager import load_layout, save_layout, LAYOUT_FILE
+from .window_state_manager import load_open_windows, save_open_windows
 
 
 # Use a central registry to manage available formulas
@@ -721,6 +722,11 @@ def build_context_menu(width=320, height=390):
         dpg.add_button(label="Settings", callback=show_settings_window)
         dpg.add_same_line()
         dpg.add_button(label="Formula Editor", callback=show_formula_editor)
+
+    # restore previously open formula windows before layout loading
+    for name in load_open_windows():
+        if name in formula_classes:
+            open_formula_window(None, None, name)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     if ICON_PATH.exists():
         try:
@@ -750,7 +756,17 @@ def build_context_menu(width=320, height=390):
     lh = dpg.get_item_height(log_window_tag)
     dpg.set_item_width(log_window_tag, vp_w - 20)
     dpg.set_item_pos(log_window_tag, [10, vp_h - lh - 10])
-    dpg.set_exit_callback(lambda: save_layout())
+
+    def _on_exit():
+        open_windows = [
+            name
+            for name in formula_classes
+            if dpg.does_item_exist(f"win_{name}") and dpg.is_item_shown(f"win_{name}")
+        ]
+        save_open_windows(open_windows)
+        save_layout()
+
+    dpg.set_exit_callback(_on_exit)
     dpg.start_dearpygui()
     dpg.destroy_context()
     logger.info("GUI closed")
