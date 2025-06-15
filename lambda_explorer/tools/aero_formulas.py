@@ -261,6 +261,9 @@ class FirstCellSpacing(Formula):
 
 class IdealGasLaw(Formula):
     """p = ρ * R * T"""
+
+    topic = "Theromdynamics"
+
     variables = ["p", "rho", "R", "T"]
 
     def __init__(self):
@@ -271,6 +274,8 @@ class IdealGasLaw(Formula):
 
 class AdiabaticPressureVolume(Formula):
     """p * v^κ = C (constant)"""
+    topic = "Theromdynamics"
+
     variables = ["p", "v", "kappa", "C"]
 
     def __init__(self):
@@ -281,6 +286,8 @@ class AdiabaticPressureVolume(Formula):
 
 class AdiabaticTemperatureVolume(Formula):
     """T * v^{κ−1} = C (constant)"""
+    topic = "Theromdynamics"
+
     variables = ["T", "v", "kappa", "C"]
 
     def __init__(self):
@@ -291,6 +298,8 @@ class AdiabaticTemperatureVolume(Formula):
 
 class AdiabaticTemperaturePressure(Formula):
     """T * p^{(1−κ)/κ} = C (constant)"""
+    topic = "Theromdynamics"
+
     variables = ["T", "p", "kappa", "C"]
 
     def __init__(self):
@@ -306,6 +315,8 @@ class AdiabaticTemperaturePressure(Formula):
 
 class MachTemperatureRatio(Formula):
     """T / T0 = 1 + (κ−1)/2 · Ma²"""
+    topic = "Theromdynamics"
+
     variables = ["T", "T0", "kappa", "Ma"]
 
     def __init__(self):
@@ -316,6 +327,8 @@ class MachTemperatureRatio(Formula):
 
 class MachPressureRatio(Formula):
     """p / p0 = (1 + (κ−1)/2 · Ma²)^{−κ/(κ−1)}"""
+    topic = "Theromdynamics"
+
     variables = ["p", "p0", "kappa", "Ma"]
 
     def __init__(self):
@@ -326,6 +339,8 @@ class MachPressureRatio(Formula):
 
 class MachDensityRatio(Formula):
     """ρ / ρ0 = (1 + (κ−1)/2 · Ma²)^{−1/(κ−1)}"""
+    topic = "Theromdynamics"
+
     variables = ["rho", "rho0", "kappa", "Ma"]
 
     def __init__(self):
@@ -340,6 +355,8 @@ class MachDensityRatio(Formula):
 
 class EnergyEquation(Formula):
     """w² / 2 = h₀ − h"""
+    topic = "Theromdynamics"
+
     variables = ["w", "h0", "h"]
 
     def __init__(self):
@@ -354,6 +371,8 @@ class EnergyEquation(Formula):
 
 class ThrustEquation(Formula):
     """F = ṁ · w_e + (p_e − p_a) · A_e"""
+    topic = "Theromdynamics"
+
     variables = ["F", "mdot", "w_e", "p_e", "p_a", "A_e"]
 
     def __init__(self):
@@ -364,6 +383,8 @@ class ThrustEquation(Formula):
 
 class EffectiveExhaustVelocity(Formula):
     """c_e = w_e + (p_e − p_a) · A_e / ṁ"""
+    topic = "Theromdynamics"
+
     variables = ["c_e", "w_e", "p_e", "p_a", "A_e", "mdot"]
 
     def __init__(self):
@@ -374,6 +395,8 @@ class EffectiveExhaustVelocity(Formula):
 
 class SpecificImpulse(Formula):
     """I_sp = F / (ṁ · g₀)"""
+    topic = "Theromdynamics"
+
     variables = ["I_sp", "F", "mdot", "g0"]
 
     def __init__(self):
@@ -384,6 +407,8 @@ class SpecificImpulse(Formula):
 
 class ThrustCoefficient(Formula):
     """c_F = F / (p₀ · A_t)"""
+    topic = "Theromdynamics"
+
     variables = ["c_F", "F", "p0", "A_t"]
 
     def __init__(self):
@@ -394,6 +419,8 @@ class ThrustCoefficient(Formula):
 
 class MassFlowRate(Formula):
     """ṁ = (p₀ · A_t / √(R · T₀)) · Γ(κ)"""
+    topic = "Theromdynamics"
+
     variables = ["mdot", "p0", "A_t", "R", "T0", "Gamma"]
 
     def __init__(self):
@@ -408,6 +435,8 @@ class MassFlowRate(Formula):
 
 class GammaFunction(Formula):
     """Γ(κ) = √κ · (2 / (κ + 1))^{(κ + 1)/(2(κ − 1))}"""
+    topic = "Theromdynamics"
+
     variables = ["Gamma", "kappa"]
 
     def __init__(self):
@@ -418,6 +447,8 @@ class GammaFunction(Formula):
 
 class CharacteristicLength(Formula):
     """L* = V₀ / A_t"""
+    topic = "Theromdynamics"
+
     variables = ["L_star", "V0", "A_t"]
 
     def __init__(self):
@@ -428,6 +459,8 @@ class CharacteristicLength(Formula):
 
 class CharacteristicVelocity(Formula):
     """c* = √(R · T₀) / Γ(κ)"""
+    topic = "Theromdynamics"
+
     variables = ["c_star", "R", "T0", "Gamma"]
 
     def __init__(self):
