@@ -60,10 +60,11 @@ def create_latex_texture(latex: str) -> str:
 
     buf = np.asarray(canvas.buffer_rgba(), dtype=np.float32)
     h_total, w_total = buf.shape[0], buf.shape[1]
-    top = max(int(h_total - bbox.y1), 0)
-    bottom = min(int(h_total - bbox.y0), h_total)
-    left = max(int(bbox.x0), 0)
-    right = min(int(bbox.x1), w_total)
+    pad = 2
+    top = max(int(h_total - bbox.y1) - pad, 0)
+    bottom = min(int(h_total - bbox.y0) + pad, h_total)
+    left = max(int(bbox.x0) - pad, 0)
+    right = min(int(bbox.x1) + pad, w_total)
     buf = buf[top:bottom, left:right, :]
     buffer = buf / 255.0
     width, height = buffer.shape[1], buffer.shape[0]
