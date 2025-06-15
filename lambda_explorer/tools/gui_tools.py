@@ -6,6 +6,9 @@ from pathlib import Path
 import csv
 import coloredlogs
 import dearpygui.dearpygui as dpg
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import matplotlib.pyplot as plt
+import numpy as np
 from .. import logger, log_calls
 
 # path to application icons
@@ -37,6 +40,26 @@ def _get_next_pos() -> List[int]:
     _next_pos[1] += _offset
     logger.debug("Next window position: %s", pos)
     return pos
+
+
+@log_calls
+def create_latex_texture(latex: str) -> str:
+    """Render LaTeX text to a Dear PyGui texture."""
+    fig, ax = plt.subplots(dpi=200)
+    ax.text(0.0, 0.0, latex)
+    ax.set_axis_off()
+    fig.subplots_adjust(0.0, 0.0, 1.0, 1.0, 0.0, 0.0)
+    canvas = FigureCanvasAgg(fig)
+    canvas.draw()
+    buffer = np.asarray(canvas.buffer_rgba(), dtype=np.float32) / 255.0
+    width, height = buffer.shape[1], buffer.shape[0]
+    tag = f"tex_{dpg.generate_uuid()}"
+    with dpg.texture_registry(show=False):
+        dpg.add_raw_texture(
+            width, height, buffer, tag=tag, format=dpg.mvFormat_Float_rgba
+        )
+    plt.close(fig)
+    return tag
 
 
 # Default values storage
@@ -484,7 +507,8 @@ def open_formula_window(sender, app_data, user_data):
         label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()
     ):
         dpg.add_text(f"Formula: {cls_name}")
-        dpg.add_text(sympy.latex(eq.eq))
+        tex_tag = create_latex_texture(sympy.latex(eq.eq))
+        dpg.add_image(tex_tag)
         with dpg.tab_bar():
             with dpg.tab(label="Calculation"):
                 for var in eq.vars:

@@ -14,7 +14,8 @@ dependencies = [
     "sympy",
     "coloredlogs",
     "verboselogs",
-    "pyyaml"
+    "pyyaml",
+    "matplotlib"
 ]
 
 [project.scripts]
