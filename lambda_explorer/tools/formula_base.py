@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from typing import Callable, Dict
 import sympy  # type: ignore
-from . import logger
+from . import logger, log_calls
 
 
 class Formula:
     """Base class for symbolic equations providing cached solvers."""
 
     variables: list[str] = []
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        for name, value in cls.__dict__.items():
+            if callable(value) and not name.startswith("__"):
+                setattr(cls, name, log_calls(value))
 
     def __init__(self, var_names: list[str], eq: sympy.Eq):
         cls = self.__class__

@@ -37,8 +37,15 @@ class KinematicViscosity(Formula):
         eq = sympy.Eq(nu, mu / rho)
         super().__init__(self.variables, eq)
 
-class AerodynamicLift(Formula):
+class ReEquation(ReynoldsNumber):
+    """Alias for Reynolds number equation."""
+
+    topic = "Aerodynamics"
+
+class LiftEquation(Formula):
     """L = 0.5 * rho * V**2 * S * Cl"""
+
+    topic = "Aerodynamics"
     variables = ["L", "rho", "V", "S", "Cl"]
 
     def __init__(self) -> None:
@@ -47,8 +54,10 @@ class AerodynamicLift(Formula):
         super().__init__(self.variables, eq)
 
 
-class AerodynamicDrag(Formula):
+class DragEquation(Formula):
     """D = 0.5 * rho * V**2 * S * Cd"""
+
+    topic = "Aerodynamics"
     variables = ["D", "rho", "V", "S", "Cd"]
 
     def __init__(self) -> None:
@@ -57,8 +66,10 @@ class AerodynamicDrag(Formula):
         super().__init__(self.variables, eq)
 
 
-class AerodynamicMoment(Formula):
+class MomentEquation(Formula):
     """M = 0.5 * rho * V**2 * S * c * Cm"""
+
+    topic = "Aerodynamics"
     variables = ["M", "rho", "V", "S", "c", "Cm"]
 
     def __init__(self) -> None:
@@ -69,6 +80,8 @@ class AerodynamicMoment(Formula):
 
 class DynamicPressure(Formula):
     """q = 0.5 * rho * V**2"""
+
+    topic = "Aerodynamics"
     variables = ["q", "rho", "V"]
 
     def __init__(self) -> None:
@@ -79,6 +92,8 @@ class DynamicPressure(Formula):
 
 class FrictionCoefficientLaminar(Formula):
     """Cf = 1.328 / sqrt(Re)"""
+
+    topic = "Aerodynamics"
     variables = ["Cf", "Re"]
 
     def __init__(self) -> None:
@@ -89,6 +104,8 @@ class FrictionCoefficientLaminar(Formula):
 
 class FrictionCoefficientTurbulent(Formula):
     """Cf = 0.455 / (log(Re)**2.58)"""
+
+    topic = "Aerodynamics"
     variables = ["Cf", "Re"]
 
     def __init__(self) -> None:
@@ -99,6 +116,8 @@ class FrictionCoefficientTurbulent(Formula):
 
 class BoundaryLayerThicknessLaminar(Formula):
     """delta = 5 * x / sqrt(Re)"""
+
+    topic = "Aerodynamics"
     variables = ["delta", "x", "Re"]
 
     def __init__(self) -> None:
@@ -109,6 +128,8 @@ class BoundaryLayerThicknessLaminar(Formula):
 
 class DisplacementThicknessLaminar(Formula):
     """delta_star = 1.72 * x / sqrt(Re)"""
+
+    topic = "Aerodynamics"
     variables = ["delta_star", "x", "Re"]
 
     def __init__(self) -> None:
@@ -119,6 +140,8 @@ class DisplacementThicknessLaminar(Formula):
 
 class MomentumThicknessLaminar(Formula):
     """theta = 0.664 * x / sqrt(Re)"""
+
+    topic = "Aerodynamics"
     variables = ["theta", "x", "Re"]
 
     def __init__(self) -> None:
@@ -129,6 +152,8 @@ class MomentumThicknessLaminar(Formula):
 
 class LiftCurveSlope(Formula):
     """Cl = 2 * pi * (alpha - alpha0)"""
+
+    topic = "Aerodynamics"
     variables = ["Cl", "alpha", "alpha0"]
 
     def __init__(self) -> None:
@@ -139,6 +164,8 @@ class LiftCurveSlope(Formula):
 
 class InducedDrag(Formula):
     """Cd_induced = Cl**2 / (pi * AR * e)"""
+
+    topic = "Aerodynamics"
     variables = ["Cd_induced", "Cl", "AR", "e"]
 
     def __init__(self) -> None:
@@ -149,6 +176,8 @@ class InducedDrag(Formula):
 
 class TotalDragCoefficient(Formula):
     """Cd_total = Cd0 + k * Cl**2"""
+
+    topic = "Aerodynamics"
     variables = ["Cd_total", "Cd0", "k", "Cl"]
 
     def __init__(self) -> None:
@@ -159,6 +188,8 @@ class TotalDragCoefficient(Formula):
 
 class DragPolar(Formula):
     """Cd_polar = Cd0 + (Cl**2 / (pi * AR * e))"""
+
+    topic = "Aerodynamics"
     variables = ["Cd_polar", "Cd0", "Cl", "AR", "e"]
 
     def __init__(self) -> None:
@@ -169,6 +200,8 @@ class DragPolar(Formula):
 
 class LiftAtMinDrag(Formula):
     """Cl_min_drag = sqrt(Cd0 * pi * AR * e)"""
+
+    topic = "Aerodynamics"
     variables = ["Cl_min_drag", "Cd0", "AR", "e"]
 
     def __init__(self) -> None:
@@ -179,6 +212,8 @@ class LiftAtMinDrag(Formula):
 
 class PressureCoefficient(Formula):
     """Cp = 1 - (V/V_inf)**2"""
+
+    topic = "Aerodynamics"
     variables = ["Cp", "V", "V_inf"]
 
     def __init__(self) -> None:
@@ -189,6 +224,8 @@ class PressureCoefficient(Formula):
 
 class VelocityRatio(Formula):
     """V_ratio = sqrt(1 - Cp)"""
+
+    topic = "Aerodynamics"
     variables = ["V_ratio", "Cp"]
 
     def __init__(self) -> None:
@@ -199,6 +236,8 @@ class VelocityRatio(Formula):
 
 class FirstCellSpacing(Formula):
     """s = y_plus * l / (sqrt(0.013) * Re**(13/14))"""
+
+    topic = "Aerodynamics"
 
     variables = ["s", "y_plus", "l", "Re"]
 
