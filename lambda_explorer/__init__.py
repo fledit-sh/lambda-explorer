@@ -40,10 +40,20 @@ import inspect
 def log_calls(func: tp.Callable) -> tp.Callable:
     """Decorator logging function entry at verbose level."""
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        logger.verbose("Calling %s", func.__qualname__)
-        return func(*args, **kwargs)
+    sig = inspect.signature(func)
+    params = ", ".join(str(p) for p in sig.parameters.values())
+    call_params = ", ".join(p.name for p in sig.parameters.values())
+
+    src = [f"def wrapper({params}):"]
+    src.append(f"    logger.verbose('Calling {func.__qualname__}')")
+    if call_params:
+        src.append(f"    return func({call_params})")
+    else:
+        src.append("    return func()")
+    namespace = {'func': func, 'logger': logger}
+    exec("\n".join(src), namespace)
+    wrapper = wraps(func)(namespace['wrapper'])
+    wrapper.__signature__ = sig
 
     # Preserve the original function signature so frameworks relying on
     # introspection (e.g. DearPyGui) can determine the correct callback
