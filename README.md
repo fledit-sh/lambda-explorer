@@ -6,6 +6,7 @@ The GUI presents every available formula and lets you calculate or plot results
 by filling in all but one variable. Formulas are defined with
 [SymPy](https://www.sympy.org/) and are automatically discovered when the
 application starts.
+Displayed formulas are rendered from LaTeX using Matplotlib for clarity.
 
 ## Installation
 
