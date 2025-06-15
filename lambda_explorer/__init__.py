@@ -33,15 +33,29 @@ __version__ = "1.0"
 verboselogs.install()
 logger = verboselogs.VerboseLogger("module_logger")
 
+from functools import wraps
 
-def setup_logging(level: str = "INFO") -> None:
+
+def log_calls(func: tp.Callable) -> tp.Callable:
+    """Decorator logging function entry at verbose level."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.verbose("Calling %s", func.__qualname__)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@log_calls
+def setup_logging(level: str = "DEBUG") -> None:
     """Configure logging for the module.
 
     Parameters
     ----------
     level : str, optional
         Logging level passed to :func:`coloredlogs.install` and used for the
-        global logger. Defaults to ``"INFO"``.
+        global logger. Defaults to ``"DEBUG"``.
     """
 
     coloredlogs.install(level=level, logger=logger)
@@ -61,6 +75,7 @@ setup_logging()
 from .tools.gui_tools import build_context_menu
 
 
+@log_calls
 def main() -> None:
     """Launch the Lambda Explorer GUI."""
     build_context_menu(width=800, height=600)

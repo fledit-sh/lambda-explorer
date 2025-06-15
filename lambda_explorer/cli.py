@@ -7,6 +7,10 @@ from .tools.solver import FormulaSolver
 from .tools.aero_formulas import *  # Register formulas
 
 
+from .tools import log_calls
+
+
+@log_calls
 def run_cli() -> None:
     """Simple command line interface for solving formulas."""
     formulas: Dict[str, Type[Formula]] = {

@@ -33,8 +33,22 @@ __version__ = "1.0"
 verboselogs.install()
 logger = verboselogs.VerboseLogger("module_logger")
 
+from functools import wraps
 
-def setup_logging(level: str = "INFO") -> None:
+
+def log_calls(func: tp.Callable) -> tp.Callable:
+    """Decorator logging function entry at verbose level."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.verbose("Calling %s", func.__qualname__)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@log_calls
+def setup_logging(level: str = "DEBUG") -> None:
     """Configure logging for this subpackage."""
 
     coloredlogs.install(level=level, logger=logger)
@@ -42,6 +56,8 @@ def setup_logging(level: str = "INFO") -> None:
 
 
 setup_logging()
+
+__all__ = ["logger", "log_calls"]
 
 # -----------------------------------------------------------------------------
 # CLASSES

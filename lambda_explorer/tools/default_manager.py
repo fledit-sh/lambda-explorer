@@ -3,12 +3,13 @@ from __future__ import annotations
 from typing import Dict
 import yaml
 import os
-from . import logger
+from . import logger, log_calls
 
 # Global mapping of default values used across the GUI
 default_values: Dict[str, str] = {}
 
 
+@log_calls
 def load_defaults_file(path: str = "defaults.yaml") -> None:
     """Load defaults from a YAML file into ``default_values``."""
     logger.debug("Loading defaults from %s", path)
@@ -27,6 +28,7 @@ def load_defaults_file(path: str = "defaults.yaml") -> None:
     logger.info("Loaded %d default values", len(default_values))
 
 
+@log_calls
 def save_defaults_file(path: str = "defaults.yaml") -> None:
     """Write ``default_values`` to a YAML file."""
     logger.debug("Saving defaults to %s", path)
