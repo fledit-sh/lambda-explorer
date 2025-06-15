@@ -50,9 +50,9 @@ def log_calls(func: tp.Callable) -> tp.Callable:
         src.append(f"    return func({call_params})")
     else:
         src.append("    return func()")
-    namespace = {'func': func, 'logger': logger}
+    namespace = {"func": func, "logger": logger}
     exec("\n".join(src), namespace)
-    wrapper = wraps(func)(namespace['wrapper'])
+    wrapper = wraps(func)(namespace["wrapper"])
     wrapper.__signature__ = sig
 
     # Preserve the original function signature so frameworks relying on

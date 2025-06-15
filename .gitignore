@@ -1,2 +1,4 @@
 build/
 lambda_explorer.egg-info/
+__pycache__/
+*.py[cod]

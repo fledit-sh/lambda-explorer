@@ -82,3 +82,15 @@ amount of information written to the log window.
 Developers who want to implement additional formulas can follow the guide in
 [`docs/developer_guide.md`](docs/developer_guide.md). It describes the required
 class structure and how new equations are automatically integrated into the GUI.
+
+## Development Workflow
+
+Use the provided `Makefile` to streamline common tasks:
+
+```bash
+make install  # install dependencies and project in editable mode
+make format   # apply code formatting using Black
+make lint     # run pre-commit hooks
+```
+
+Run `make run` to start the GUI or `make run-cli` for the command line interface.

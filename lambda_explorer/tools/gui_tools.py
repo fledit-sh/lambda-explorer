@@ -75,7 +75,9 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
     global gui_log_handler
     if gui_log_handler:
         return
-    with dpg.window(label="Logs", tag=log_window_tag, width=400, height=200, show=False):
+    with dpg.window(
+        label="Logs", tag=log_window_tag, width=400, height=200, show=False
+    ):
         with dpg.child_window(tag=log_container_tag, autosize_x=True, autosize_y=True):
             pass
     gui_log_handler = GuiLogHandler(log_container_tag)
@@ -84,7 +86,9 @@ def setup_logger_window() -> None:  # pragma: no cover - GUI
 
 
 @log_calls
-def show_log_window(sender=None, app_data=None, user_data=None):  # pragma: no cover - GUI
+def show_log_window(
+    sender=None, app_data=None, user_data=None
+):  # pragma: no cover - GUI
     """Display the logging window."""
     setup_logger_window()
     logger.debug("Showing log window")
@@ -104,7 +108,9 @@ def set_log_level_callback(sender, app_data, user_data):  # pragma: no cover - G
 
 
 @log_calls
-def show_settings_window(sender=None, app_data=None, user_data=None):  # pragma: no cover - GUI
+def show_settings_window(
+    sender=None, app_data=None, user_data=None
+):  # pragma: no cover - GUI
     """Display the settings window allowing adjustment of options."""
     logger.debug("Showing settings window")
     if not dpg.does_item_exist(settings_window_tag):
@@ -193,7 +199,9 @@ def show_formula_editor(sender=None, app_data=None, user_data=None):
     if dpg.does_item_exist(tag):
         dpg.show_item(tag)
         return
-    with dpg.window(label="Formula Editor", tag=tag, width=400, height=220, pos=_get_next_pos()):
+    with dpg.window(
+        label="Formula Editor", tag=tag, width=400, height=220, pos=_get_next_pos()
+    ):
         name_tag = "fe_name"
         vars_tag = "fe_vars"
         expr_tag = "fe_expr"
@@ -202,12 +210,20 @@ def show_formula_editor(sender=None, app_data=None, user_data=None):
         dpg.add_input_text(label="Variables", tag=vars_tag, hint="comma separated")
         dpg.add_input_text(label="Expression", tag=expr_tag, hint="for first variable")
         dpg.add_button(
-            label="Add", callback=_create_formula_callback,
-            user_data={"name": name_tag, "vars": vars_tag, "expr": expr_tag, "delete_combo": delete_combo}
+            label="Add",
+            callback=_create_formula_callback,
+            user_data={
+                "name": name_tag,
+                "vars": vars_tag,
+                "expr": expr_tag,
+                "delete_combo": delete_combo,
+            },
         )
         dpg.add_separator()
         dpg.add_combo(list(custom_formula_classes), label="Delete", tag=delete_combo)
-        dpg.add_button(label="Delete", callback=_delete_formula_callback, user_data=delete_combo)
+        dpg.add_button(
+            label="Delete", callback=_delete_formula_callback, user_data=delete_combo
+        )
     dpg.show_item(tag)
 
 
@@ -464,7 +480,9 @@ def open_formula_window(sender, app_data, user_data):
         "solver": solver,
     }
 
-    with dpg.window(label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()):
+    with dpg.window(
+        label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()
+    ):
         dpg.add_text(f"Formula: {cls_name}")
         dpg.add_text(sympy.latex(eq.eq))
         with dpg.tab_bar():
@@ -473,7 +491,9 @@ def open_formula_window(sender, app_data, user_data):
                     input_tag = f"{window_tag}_input_{var}"
                     default = default_values.get(var, "")
                     with dpg.group(horizontal=True):
-                        dpg.add_input_text(tag=input_tag, label=var, default_value=default)
+                        dpg.add_input_text(
+                            tag=input_tag, label=var, default_value=default
+                        )
                         shared_data["input_tag"] = input_tag
                         dpg.add_button(
                             label="Calc",
@@ -548,7 +568,9 @@ def open_formula_window(sender, app_data, user_data):
                 dpg.add_separator()
                 with dpg.group(tag=const_group_tag):
                     pass
-                dpg.add_button(label="Plot", callback=plot_callback, user_data=plot_data)
+                dpg.add_button(
+                    label="Plot", callback=plot_callback, user_data=plot_data
+                )
                 dpg.add_same_line()
                 dpg.add_button(
                     label="Export CSV",
@@ -571,16 +593,22 @@ def open_formula_window(sender, app_data, user_data):
                 def_tags: Dict[str, str] = {}
                 for var in eq.vars:
                     tag = f"{window_tag}_def_{var}"
-                    dpg.add_input_text(label=var, tag=tag, default_value=default_values.get(var, ""))
+                    dpg.add_input_text(
+                        label=var, tag=tag, default_value=default_values.get(var, "")
+                    )
                     def_tags[var] = tag
-                dpg.add_button(label="Save", callback=export_defaults_default, user_data=def_tags)
+                dpg.add_button(
+                    label="Save", callback=export_defaults_default, user_data=def_tags
+                )
                 dpg.add_same_line()
                 dpg.add_button(
                     label="Save As",
                     callback=lambda s, a, u: dpg.show_item(f"{window_tag}_def_export"),
                 )
                 dpg.add_same_line()
-                dpg.add_button(label="Load", callback=import_defaults_default, user_data=def_tags)
+                dpg.add_button(
+                    label="Load", callback=import_defaults_default, user_data=def_tags
+                )
                 with dpg.file_dialog(
                     directory_selector=False,
                     show=False,
@@ -629,7 +657,9 @@ def build_context_menu(width=320, height=390):
 
                 # create an item handler registry to manage click events
                 with dpg.item_handler_registry() as handler:
-                    dpg.add_item_clicked_handler(callback=open_formula_window, user_data=name)
+                    dpg.add_item_clicked_handler(
+                        callback=open_formula_window, user_data=name
+                    )
                 dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
         dpg.add_button(label="View logs", callback=show_log_window)

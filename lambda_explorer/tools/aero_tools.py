@@ -23,7 +23,6 @@ from .aero_formulas import (
     PressureCoefficient,
     VelocityRatio,
     FirstCellSpacing,
-    
 )
 from .interpolation_formula import ExampleIcingEquation
 

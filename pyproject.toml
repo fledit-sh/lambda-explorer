@@ -27,3 +27,6 @@ where = ["."]
 [tool.setuptools.package-data]
 "lambda_explorer.tools" = ["defaults.yaml"]
 "lambda_explorer" = ["logo/*.png", "logo/*.ico"]
+
+[tool.black]
+line-length = 88

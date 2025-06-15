@@ -48,9 +48,7 @@ class InterpolatedTableFormula(Formula):
 
     @classmethod
     @log_calls
-    def _interp_distance(
-        cls, values: List[float], distance: float
-    ) -> float:
+    def _interp_distance(cls, values: List[float], distance: float) -> float:
         """Interpolate across the stored distance values."""
         dist = cls._distances
         if distance <= dist[0]:
@@ -149,4 +147,3 @@ class ExampleIcingEquation(InterpolatedTableFormula):
             40.0: [0.338, 0.324, 0.298, 0.279, 0.250, 0.226, 0.215],
         },
     }
-

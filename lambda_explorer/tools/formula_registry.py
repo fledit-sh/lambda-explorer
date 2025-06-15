@@ -29,7 +29,9 @@ class FormulaRegistry:
         return {cls.__name__: cls for cls in self._gather_formulas(Formula)}
 
     @log_calls
-    def create_formula(self, name: str, var_names: List[str], eq: sympy.Eq) -> Type[Formula]:
+    def create_formula(
+        self, name: str, var_names: List[str], eq: sympy.Eq
+    ) -> Type[Formula]:
         def __init__(self) -> None:
             Formula.__init__(self, var_names, eq)
 
