@@ -34,6 +34,7 @@ verboselogs.install()
 logger = verboselogs.VerboseLogger("module_logger")
 
 from functools import wraps
+import inspect
 
 
 def log_calls(func: tp.Callable) -> tp.Callable:
@@ -43,6 +44,11 @@ def log_calls(func: tp.Callable) -> tp.Callable:
     def wrapper(*args, **kwargs):
         logger.verbose("Calling %s", func.__qualname__)
         return func(*args, **kwargs)
+
+    # Preserve the original function signature so frameworks relying on
+    # introspection (e.g. DearPyGui) can determine the correct callback
+    # arguments even though we wrap the function.
+    wrapper.__signature__ = inspect.signature(func)
 
     return wrapper
 
