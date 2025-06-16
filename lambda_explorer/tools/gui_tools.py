@@ -202,6 +202,7 @@ def _create_formula_callback(sender, app_data, user_data):
     name = dpg.get_value(user_data["name"]).strip()
     vars_raw = dpg.get_value(user_data["vars"])
     expr_text = dpg.get_value(user_data["expr"])
+    latex_text = dpg.get_value(user_data.get("latex", ""))
     delete_combo = user_data["delete_combo"]
     if not name or not vars_raw or not expr_text:
         logger.error("All fields must be filled")
@@ -218,7 +219,7 @@ def _create_formula_callback(sender, app_data, user_data):
         logger.error("Invalid expression: %s", exc)
         return
     eq = sympy.Eq(sym_dict[var_names[0]], expr)
-    cls = formula_registry.create_formula(name, var_names, eq)
+    cls = formula_registry.create_formula(name, var_names, eq, latex_text or None)
     for v in var_names:
         default_values.setdefault(v, "")
     _add_formula_to_overview(name)
@@ -259,10 +260,12 @@ def show_formula_editor(sender=None, app_data=None, user_data=None):
         name_tag = "fe_name"
         vars_tag = "fe_vars"
         expr_tag = "fe_expr"
+        latex_tag = "fe_latex"
         delete_combo = "fe_delete"
         dpg.add_input_text(label="Name", tag=name_tag)
         dpg.add_input_text(label="Variables", tag=vars_tag, hint="comma separated")
         dpg.add_input_text(label="Expression", tag=expr_tag, hint="for first variable")
+        dpg.add_input_text(label="LaTeX (optional)", tag=latex_tag)
         dpg.add_button(
             label="Add",
             callback=_create_formula_callback,
@@ -270,6 +273,7 @@ def show_formula_editor(sender=None, app_data=None, user_data=None):
                 "name": name_tag,
                 "vars": vars_tag,
                 "expr": expr_tag,
+                "latex": latex_tag,
                 "delete_combo": delete_combo,
             },
         )
@@ -538,7 +542,7 @@ def open_formula_window(sender, app_data, user_data):
         label=cls_name, tag=window_tag, width=450, height=400, pos=_get_next_pos()
     ):
         dpg.add_text(f"Formula: {cls_name}")
-        tex_tag = create_latex_texture(sympy.latex(eq.eq))
+        tex_tag = create_latex_texture(eq.latex_repr())
         dpg.add_image(tex_tag)
         with dpg.tab_bar():
             with dpg.tab(label="Calculation"):

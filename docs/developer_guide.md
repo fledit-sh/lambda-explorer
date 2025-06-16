@@ -38,6 +38,19 @@ class AspectRatio(Formula):
 After the module is imported, `AspectRatio` will appear in the formula overview
 window and can be used like any other equation.
 
+### Custom LaTeX Output
+
+The base class can render the equation automatically using
+`sympy.latex`. If you want to override the generated LaTeX string
+you can pass an optional `latex` argument to `super().__init__`:
+
+```python
+eq = sympy.Eq(AR, b ** 2 / S)
+super().__init__(self.variables, eq, latex=r"AR = \frac{b^2}{S}")
+```
+
+The GUI will display this string instead of auto‑generated LaTeX.
+
 ## Default Values
 
 Default variable values used in the GUI are stored in
