@@ -457,12 +457,47 @@ class KinematicViscositySutherland(Formula):
     variables = ["nu", "T", "p", "mu0", "T0", "S", "R"]
 
     def __init__(self) -> None:
-        # Symbol­definition
+        """Initialise equation and provide lightweight solvers."""
+
         nu, T, p, mu0, T0, S, R = sympy.symbols("nu T p mu0 T0 S R")
 
-        # Ideales Gas: ρ = p / (R T)  →  ν = μ/ρ
-        eq = sympy.Eq(nu, mu0 * (T / T0) ** sympy.Rational(3, 2) * (T0 + S) / (T + S) / (p / (R * T)))
-        super().__init__(self.variables, eq)
+        # Ideal gas: ρ = p / (R T)  →  ν = μ/ρ
+        expr = mu0 * (T / T0) ** sympy.Rational(3, 2) * (T0 + S) / (T + S) * R * T / p
+        eq = sympy.Eq(nu, expr)
+
+        cls = self.__class__
+        if not hasattr(cls, "_vars"):
+            cls._vars = {name: sympy.symbols(name) for name in self.variables}
+            cls.eq = eq
+            cls.variables = self.variables
+
+            # Precompute only the fast solutions to avoid slow symbolic solving
+            cls._solvers = {
+                "nu": sympy.lambdify(
+                    [cls._vars[n] for n in self.variables if n != "nu"],
+                    expr,
+                    "math",
+                ),
+                "p": sympy.lambdify(
+                    [cls._vars[n] for n in self.variables if n != "p"],
+                    sympy.solve(eq, p)[0],
+                    "math",
+                ),
+                "mu0": sympy.lambdify(
+                    [cls._vars[n] for n in self.variables if n != "mu0"],
+                    sympy.solve(eq, mu0)[0],
+                    "math",
+                ),
+                "R": sympy.lambdify(
+                    [cls._vars[n] for n in self.variables if n != "R"],
+                    sympy.solve(eq, R)[0],
+                    "math",
+                ),
+            }
+
+        self.vars = cls._vars
+        self.eq = cls.eq
+        self._solvers = cls._solvers
 
 # ----------------------------------------------------------------------------
 # Auxiliary Functions
