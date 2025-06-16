@@ -1,6 +1,6 @@
 # gui_tools.py
 import sympy  # type: ignore
-from typing import Dict, Type, Optional, List
+from typing import Any, Dict, Type, Optional, List
 import logging
 from pathlib import Path
 import csv
@@ -684,6 +684,180 @@ def open_formula_window(sender, app_data, user_data):
         update_plot_inputs(None, None, plot_data)
 
 
+# -----------------------------------------------------------------------------
+# Node editor interface
+# -----------------------------------------------------------------------------
+
+node_editor_tag = "node_editor"
+constant_values: Dict[str, Any] = {}
+node_output_values: Dict[str, Any] = {}
+
+
+@log_calls
+def _update_constant_value(sender, app_data, user_data) -> None:
+    """Store the updated constant value for node outputs."""
+    value_str = str(dpg.get_value(sender))
+    try:
+        if "," in value_str:
+            value = [float(v.strip()) for v in value_str.split(",") if v.strip()]
+        else:
+            value = float(value_str)
+    except ValueError:
+        logger.error("Invalid constant value: %s", value_str)
+        return
+    constant_values[user_data] = value
+
+
+@log_calls
+def add_constant_node(parent: str) -> None:
+    """Insert a constant generator node into the editor."""
+    node_id = f"const_{dpg.generate_uuid()}"
+    out_tag = f"{node_id}_out"
+    val_tag = f"{node_id}_val"
+    with dpg.node(parent=parent, label="Constant", tag=node_id):
+        with dpg.node_attribute():
+            dpg.add_input_text(
+                label="Value",
+                tag=val_tag,
+                default_value="0.0",
+                callback=_update_constant_value,
+                user_data=out_tag,
+            )
+        with dpg.node_attribute(tag=out_tag, attribute_type=dpg.mvNode_Attr_Output):
+            dpg.add_text("out")
+    constant_values[out_tag] = 0.0
+
+
+@log_calls
+def _compute_formula_node(sender, app_data, user_data) -> None:
+    """Calculate a formula node using connected constants."""
+    solver: FormulaSolver = user_data["solver"]
+    inputs: Dict[str, str] = user_data["inputs"]
+    outputs: Dict[str, str] = user_data["outputs"]
+    links = dpg.get_links(node_editor_tag)
+    knowns: Dict[str, float] = {}
+    for var, attr in inputs.items():
+        for _, src, dst in links:
+            if dst == attr:
+                if src in constant_values:
+                    val = constant_values[src]
+                    if isinstance(val, list):
+                        return
+                    knowns[var] = float(val)
+                elif src in node_output_values:
+                    knowns[var] = float(node_output_values[src])
+                break
+    try:
+        result = solver.solve(knowns)
+    except Exception as exc:  # pragma: no cover - GUI
+        logger.error("Formula error: %s", exc)
+        return
+    target = next(v for v in solver.formula.variables if v not in knowns)
+    out_tag = outputs[target]
+    node_output_values[out_tag] = result
+    dpg.set_item_label(out_tag, f"{target}: {result:.3f}")
+
+
+@log_calls
+def add_formula_node(parent: str, cls_name: str) -> None:
+    """Insert a formula node for the given class name."""
+    eq = formula_classes[cls_name]()
+    solver = FormulaSolver(eq)
+    node_id = f"formula_{dpg.generate_uuid()}"
+    with dpg.node(parent=parent, label=cls_name, tag=node_id):
+        in_tags: Dict[str, str] = {}
+        out_tags: Dict[str, str] = {}
+        for var in eq.variables:
+            tag = f"{node_id}_in_{var}"
+            with dpg.node_attribute(tag=tag, attribute_type=dpg.mvNode_Attr_Input):
+                dpg.add_text(var)
+            in_tags[var] = tag
+        for var in eq.variables:
+            tag = f"{node_id}_out_{var}"
+            with dpg.node_attribute(tag=tag, attribute_type=dpg.mvNode_Attr_Output):
+                dpg.add_text(var)
+            out_tags[var] = tag
+        dpg.add_button(
+            label="Compute",
+            callback=_compute_formula_node,
+            user_data={"solver": solver, "inputs": in_tags, "outputs": out_tags},
+        )
+    for tag in out_tags.values():
+        node_output_values[tag] = 0.0
+
+
+@log_calls
+def _plot_node_callback(sender, app_data, user_data) -> None:  # pragma: no cover
+    """Draw a plot from connected data arrays."""
+    links = dpg.get_links(node_editor_tag)
+    x = None
+    y = None
+    for _, src, dst in links:
+        if dst == user_data["x_attr"]:
+            x = constant_values.get(src) or node_output_values.get(src)
+        if dst == user_data["y_attr"]:
+            y = constant_values.get(src) or node_output_values.get(src)
+    if x is None or y is None:
+        logger.error("Plot node requires X and Y inputs")
+        return
+    if not isinstance(x, list):
+        x = [x]
+    if not isinstance(y, list):
+        y = [y]
+    dpg.set_value(user_data["series_tag"], [x, y])
+
+
+@log_calls
+def add_plot_node(parent: str) -> None:
+    """Insert a plotting node into the editor."""
+    node_id = f"plot_{dpg.generate_uuid()}"
+    x_tag = f"{node_id}_x"
+    y_tag = f"{node_id}_y"
+    with dpg.node(parent=parent, label="Plot", tag=node_id):
+        with dpg.node_attribute(tag=x_tag, attribute_type=dpg.mvNode_Attr_Input):
+            dpg.add_text("X")
+        with dpg.node_attribute(tag=y_tag, attribute_type=dpg.mvNode_Attr_Input):
+            dpg.add_text("Y")
+        with dpg.node_attribute(attribute_type=dpg.mvNode_Attr_Static):
+            with dpg.plot(height=150, width=200) as plot_tag:
+                dpg.add_plot_axis(dpg.mvXAxis)
+                with dpg.plot_axis(dpg.mvYAxis):
+                    series_tag = f"{node_id}_series"
+                    dpg.add_line_series([], [], tag=series_tag)
+    dpg.add_button(
+        label="Plot",
+        callback=_plot_node_callback,
+        user_data={"x_attr": x_tag, "y_attr": y_tag, "series_tag": series_tag},
+    )
+
+
+@log_calls
+def show_node_editor(sender=None, app_data=None, user_data=None) -> None:
+    """Display the node editor window."""
+    tag = "node_editor_window"
+    if dpg.does_item_exist(tag):
+        dpg.show_item(tag)
+        return
+    with dpg.window(
+        label="Node Editor", tag=tag, width=600, height=400, pos=_get_next_pos()
+    ):
+        dpg.add_button(
+            label="Add Constant", callback=lambda: add_constant_node(node_editor_tag)
+        )
+        dpg.add_same_line()
+        dpg.add_combo(
+            list(formula_classes),
+            label="Add Formula",
+            callback=lambda s, a, u: add_formula_node(node_editor_tag, str(a)),
+        )
+        dpg.add_same_line()
+        dpg.add_button(
+            label="Add Plot", callback=lambda: add_plot_node(node_editor_tag)
+        )
+        dpg.add_node_editor(tag=node_editor_tag, minimap=True)
+    dpg.show_item(tag)
+
+
 # Build context menu overview
 @log_calls
 def build_context_menu(width=320, height=390):
@@ -721,6 +895,8 @@ def build_context_menu(width=320, height=390):
         dpg.add_button(label="Settings", callback=show_settings_window)
         dpg.add_same_line()
         dpg.add_button(label="Formula Editor", callback=show_formula_editor)
+        dpg.add_same_line()
+        dpg.add_button(label="Node Editor", callback=show_node_editor)
     dpg.create_viewport(title="Formula Overview", width=width, height=height)
     if ICON_PATH.exists():
         try:
