@@ -30,10 +30,10 @@ class FormulaRegistry:
 
     @log_calls
     def create_formula(
-        self, name: str, var_names: List[str], eq: sympy.Eq
+        self, name: str, var_names: List[str], eq: sympy.Eq, latex: str | None = None
     ) -> Type[Formula]:
         def __init__(self) -> None:
-            Formula.__init__(self, var_names, eq)
+            Formula.__init__(self, var_names, eq, latex)
 
         cls = type(name, (Formula,), {"variables": var_names, "__init__": __init__})
         self.formula_classes[name] = cls

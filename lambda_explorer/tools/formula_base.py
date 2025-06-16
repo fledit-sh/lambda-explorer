@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 import sympy  # type: ignore
 
@@ -18,11 +18,12 @@ class Formula:
             if callable(value) and not name.startswith("__"):
                 setattr(cls, name, log_calls(value))
 
-    def __init__(self, var_names: list[str], eq: sympy.Eq):
+    def __init__(self, var_names: list[str], eq: sympy.Eq, latex: Optional[str] = None):
         cls = self.__class__
         if not hasattr(cls, "_vars"):
             cls._vars = {name: sympy.symbols(name) for name in var_names}
             cls.eq = eq
+            cls._latex = latex
             cls.variables = var_names
             cls._solvers = {}
             for target, symbol in cls._vars.items():
@@ -42,7 +43,12 @@ class Formula:
         self.vars = cls._vars
         self.eq = cls.eq
         self._solvers = cls._solvers
+        self._latex = cls._latex
         logger.debug("Initialized formula %s", cls.__name__)
+
+    def latex_repr(self) -> str:
+        """Return a LaTeX representation of the equation."""
+        return self._latex or sympy.latex(self.eq)
 
     def solve(self, **knowns) -> float:
         total = set(self.vars.keys())

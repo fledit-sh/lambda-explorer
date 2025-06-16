@@ -75,6 +75,11 @@ current positions and sizes of all windows are written to `layout.ini` and the
 list of visible windows is stored in `open_windows.json`. Both the layout and
 open windows are restored on the next start.
 
+A built-in *Formula Editor* lets you create new equations at runtime. Provide a
+comma-separated list of variables and a SymPy expression for the first variable.
+An optional field allows you to supply a custom LaTeX string that will be used
+for display instead of the automatically generated one.
+
 The *Settings* window lets you adjust the logging level of the application at
 runtime. Choose between `DEBUG`, `INFO`, `WARNING` and `ERROR` to control the
 amount of information written to the log window.

@@ -21,7 +21,7 @@ import verboselogs
 __author__ = "Noel Ernsting Luz"
 __copyright__ = "Copyright (C) 2022 Noel Ernsting Luz"
 __license__ = "Public Domain"
-__version__ = "1.0"
+__version__ = "1.1"
 
 # -----------------------------------------------------------------------------
 # GLOBALS
