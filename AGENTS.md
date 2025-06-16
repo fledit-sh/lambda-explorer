@@ -53,3 +53,33 @@ Use concise commit messages in the present tense (e.g. "Add new formula" or
 When opening a pull request, summarise the changes and mention any tests that
 were run. If you add new dependencies, explain why they are required.
 
+## Semantic Versioning Policy (MAJOR.MINOR.PATCH)
+The file lambda_explorer/__version__.py defines the current version.
+Every change to the codebase must be reflected by incrementing one part of the version number according to the following rules:
+
+### MAJOR (X.0.0)
+Increment if:
+- Incompatible API changes are made
+- Public interfaces or formulas are removed or renamed
+- Existing results or GUI behavior change in backward-incompatible ways
+
+### MINOR (0.X.0)
+Increment if:
+- New features or formulas are added in a backward-compatible way
+- New CLI commands, GUI tools, or plotting features are introduced
+
+### PATCH (0.0.X)
+Increment if:
+- Bugs are fixed
+- Documentation is updated
+- Internal improvements or refactorings are made with no functional change
+- GUI layout or styling is adjusted without changing behavior
+
+### Codex Rule (Auto-Applied)
+Every commit or pull request must be accompanied by one of the following version tags in the commit message:
+
+- [version:major]
+- [version:minor]
+- [version:patch]
+
+Codex or CI scripts must automatically bump the version accordingly in __version__.py.
