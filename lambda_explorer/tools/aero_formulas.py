@@ -38,13 +38,7 @@ class KinematicViscosity(Formula):
         super().__init__(self.variables, eq)
 
 
-class ReEquation(ReynoldsNumber):
-    """Alias for Reynolds number equation."""
-
-    topic = "Aerodynamics"
-
-
-class LiftEquation(Formula):
+class AerdynamicLift(Formula):
     """L = 0.5 * rho * V**2 * S * Cl"""
 
     topic = "Aerodynamics"
@@ -56,7 +50,7 @@ class LiftEquation(Formula):
         super().__init__(self.variables, eq)
 
 
-class DragEquation(Formula):
+class AerdynamicDrag(Formula):
     """D = 0.5 * rho * V**2 * S * Cd"""
 
     topic = "Aerodynamics"
@@ -68,7 +62,7 @@ class DragEquation(Formula):
         super().__init__(self.variables, eq)
 
 
-class MomentEquation(Formula):
+class AerdynamicMoment(Formula):
     """M = 0.5 * rho * V**2 * S * c * Cm"""
 
     topic = "Aerodynamics"
@@ -95,7 +89,7 @@ class DynamicPressure(Formula):
 class FrictionCoefficientLaminar(Formula):
     """Cf = 1.328 / sqrt(Re)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cf", "Re"]
 
     def __init__(self) -> None:
@@ -107,7 +101,7 @@ class FrictionCoefficientLaminar(Formula):
 class FrictionCoefficientTurbulent(Formula):
     """Cf = 0.455 / (log(Re)**2.58)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cf", "Re"]
 
     def __init__(self) -> None:
@@ -119,7 +113,7 @@ class FrictionCoefficientTurbulent(Formula):
 class BoundaryLayerThicknessLaminar(Formula):
     """delta = 5 * x / sqrt(Re)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["delta", "x", "Re"]
 
     def __init__(self) -> None:
@@ -131,7 +125,7 @@ class BoundaryLayerThicknessLaminar(Formula):
 class DisplacementThicknessLaminar(Formula):
     """delta_star = 1.72 * x / sqrt(Re)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["delta_star", "x", "Re"]
 
     def __init__(self) -> None:
@@ -143,7 +137,7 @@ class DisplacementThicknessLaminar(Formula):
 class MomentumThicknessLaminar(Formula):
     """theta = 0.664 * x / sqrt(Re)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["theta", "x", "Re"]
 
     def __init__(self) -> None:
@@ -155,7 +149,7 @@ class MomentumThicknessLaminar(Formula):
 class LiftCurveSlope(Formula):
     """Cl = 2 * pi * (alpha - alpha0)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cl", "alpha", "alpha0"]
 
     def __init__(self) -> None:
@@ -167,7 +161,7 @@ class LiftCurveSlope(Formula):
 class InducedDrag(Formula):
     """Cd_induced = Cl**2 / (pi * AR * e)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cd_induced", "Cl", "AR", "e"]
 
     def __init__(self) -> None:
@@ -179,7 +173,7 @@ class InducedDrag(Formula):
 class TotalDragCoefficient(Formula):
     """Cd_total = Cd0 + k * Cl**2"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cd_total", "Cd0", "k", "Cl"]
 
     def __init__(self) -> None:
@@ -191,7 +185,7 @@ class TotalDragCoefficient(Formula):
 class DragPolar(Formula):
     """Cd_polar = Cd0 + (Cl**2 / (pi * AR * e))"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cd_polar", "Cd0", "Cl", "AR", "e"]
 
     def __init__(self) -> None:
@@ -203,7 +197,7 @@ class DragPolar(Formula):
 class LiftAtMinDrag(Formula):
     """Cl_min_drag = sqrt(Cd0 * pi * AR * e)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["Cl_min_drag", "Cd0", "AR", "e"]
 
     def __init__(self) -> None:
@@ -227,7 +221,7 @@ class PressureCoefficient(Formula):
 class VelocityRatio(Formula):
     """V_ratio = sqrt(1 - Cp)"""
 
-    topic = "Aerodynamics"
+    topic = "Aerodynamics Detail"
     variables = ["V_ratio", "Cp"]
 
     def __init__(self) -> None:
@@ -448,6 +442,28 @@ class MassFlowRate(Formula):
         eq = sympy.Eq(mdot, (p0 * A_t / sympy.sqrt(R * T0)) * Gamma)
         super().__init__(self.variables, eq)
 
+class KinematicViscositySutherland(Formula):
+    """ν = (μ₀ · (T/T₀)^(3/2) · (T₀ + S)/(T + S)) / (p / (R · T))
+
+    Sutherland-Gleichung für die kinematische Viskosität ν(T, p).
+    """
+
+    topic = "Aerodynamics"
+    variables = ["nu", "T", "p", "mu0", "T0", "S", "R"]
+
+    def __init__(self):
+        # Symbol­definition
+        nu, T, p, mu0, T0, S, R = sympy.symbols(
+            "nu T p mu0 T0 S R"
+        )
+
+        # Sutherland: μ(T)
+        mu_T = mu0 * (T / T0) ** sympy.Rational(3, 2) * (T0 + S) / (T + S)
+
+        # Ideales Gas: ρ = p / (R T)  →  ν = μ/ρ
+        eq = sympy.Eq(nu, mu_T / (p / (R * T)))
+
+        super().__init__(self.variables, eq)
 
 # ----------------------------------------------------------------------------
 # Auxiliary Functions
