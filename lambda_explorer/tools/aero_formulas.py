@@ -458,16 +458,10 @@ class KinematicViscositySutherland(Formula):
 
     def __init__(self) -> None:
         # Symbol­definition
-        nu, T, p, mu0, T0, S, R = sympy.symbols(
-            "nu T p mu0 T0 S R"
-        )
-
-        # Sutherland: μ(T)
-        mu_T = mu0 * (T / T0) ** sympy.Rational(3, 2) * (T0 + S) / (T + S)
+        nu, T, p, mu0, T0, S, R = sympy.symbols("nu T p mu0 T0 S R")
 
         # Ideales Gas: ρ = p / (R T)  →  ν = μ/ρ
-        eq = sympy.Eq(nu, mu_T / (p / (R * T)))
-
+        eq = sympy.Eq(nu, mu0 * (T / T0) ** sympy.Rational(3, 2) * (T0 + S) / (T + S) / (p / (R * T)))
         super().__init__(self.variables, eq)
 
 # ----------------------------------------------------------------------------
