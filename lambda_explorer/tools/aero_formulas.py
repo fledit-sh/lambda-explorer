@@ -443,15 +443,20 @@ class MassFlowRate(Formula):
         super().__init__(self.variables, eq)
 
 class KinematicViscositySutherland(Formula):
-    """ν = (μ₀ · (T/T₀)^(3/2) · (T₀ + S)/(T + S)) / (p / (R · T))
+    """Kinematic viscosity from Sutherland's law.
 
-    Sutherland-Gleichung für die kinematische Viskosität ν(T, p).
+    ν = (μ₀ (T/T₀)^(3/2) (T₀ + S)/(T + S)) / (p / (R · T))
+
+    The formula relates temperature ``T`` and pressure ``p`` to the
+    kinematic viscosity ``ν`` using the reference viscosity ``μ₀``,
+    reference temperature ``T₀``, Sutherland constant ``S`` and gas
+    constant ``R``.
     """
 
     topic = "Aerodynamics"
     variables = ["nu", "T", "p", "mu0", "T0", "S", "R"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Symbol­definition
         nu, T, p, mu0, T0, S, R = sympy.symbols(
             "nu T p mu0 T0 S R"
