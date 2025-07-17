@@ -1,8 +1,7 @@
 # !/usr/bin/env python
-"""Title.
+"""Lambda Explorer package.
 
-Description
-"""
+Provides CLI entry points and GUI helpers for interactive formula exploration."""
 # -----------------------------------------------------------------------------
 # IMPORTS
 # -----------------------------------------------------------------------------
