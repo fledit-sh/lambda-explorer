@@ -13,6 +13,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from .. import logger, log_calls
+import lambda_explorer.formulas  # noqa: F401
 
 # path to application icons
 ICON_PATH = Path(__file__).resolve().parent.parent / "logo" / "favicon.ico"

@@ -41,3 +41,7 @@ coloredlogs.install(level="CRITICAL", logger=logger)
 # -----------------------------------------------------------------------------
 # FUNCTIONS
 # -----------------------------------------------------------------------------
+
+# Import submodules so their formulas register with the Formula base class.
+from . import propulsion  # noqa: F401
+from . import thermodynamics  # noqa: F401
