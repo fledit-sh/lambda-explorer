@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sympy  # type: ignore
 
-from ..tools.aero_tools import Formula
+from ..tools.formula_base import Formula
 
 class GeneralThrust(Formula):
     """F = m_dot * c_e = ∮ p dA_l"""
