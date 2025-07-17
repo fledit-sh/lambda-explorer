@@ -624,14 +624,16 @@ def open_formula_window(sender, app_data, user_data):
                 dpg.add_separator()
                 with dpg.group(tag=const_group_tag):
                     pass
-                dpg.add_button(
-                    label="Plot", callback=plot_callback, user_data=plot_data
-                )
-                dpg.add_same_line()
-                dpg.add_button(
-                    label="Export CSV",
-                    callback=lambda s, a, u: dpg.show_item(f"{window_tag}_csv_dialog"),
-                )
+                with dpg.group(horizontal=True):
+                    dpg.add_button(
+                        label="Plot", callback=plot_callback, user_data=plot_data
+                    )
+                    dpg.add_button(
+                        label="Export CSV",
+                        callback=lambda s, a, u: dpg.show_item(
+                            f"{window_tag}_csv_dialog"
+                        ),
+                    )
                 with dpg.file_dialog(
                     directory_selector=False,
                     show=False,
@@ -653,18 +655,23 @@ def open_formula_window(sender, app_data, user_data):
                         label=var, tag=tag, default_value=default_values.get(var, "")
                     )
                     def_tags[var] = tag
-                dpg.add_button(
-                    label="Save", callback=export_defaults_default, user_data=def_tags
-                )
-                dpg.add_same_line()
-                dpg.add_button(
-                    label="Save As",
-                    callback=lambda s, a, u: dpg.show_item(f"{window_tag}_def_export"),
-                )
-                dpg.add_same_line()
-                dpg.add_button(
-                    label="Load", callback=import_defaults_default, user_data=def_tags
-                )
+                with dpg.group(horizontal=True):
+                    dpg.add_button(
+                        label="Save",
+                        callback=export_defaults_default,
+                        user_data=def_tags,
+                    )
+                    dpg.add_button(
+                        label="Save As",
+                        callback=lambda s, a, u: dpg.show_item(
+                            f"{window_tag}_def_export"
+                        ),
+                    )
+                    dpg.add_button(
+                        label="Load",
+                        callback=import_defaults_default,
+                        user_data=def_tags,
+                    )
                 with dpg.file_dialog(
                     directory_selector=False,
                     show=False,
@@ -718,11 +725,10 @@ def build_context_menu(width=320, height=390):
                     )
                 dpg.bind_item_handler_registry(item_tag, handler)
         dpg.add_separator()
-        dpg.add_button(label="View logs", callback=show_log_window)
-        dpg.add_same_line()
-        dpg.add_button(label="Settings", callback=show_settings_window)
-        dpg.add_same_line()
-        dpg.add_button(label="Formula Editor", callback=show_formula_editor)
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="View logs", callback=show_log_window)
+            dpg.add_button(label="Settings", callback=show_settings_window)
+            dpg.add_button(label="Formula Editor", callback=show_formula_editor)
 
     # restore previously open formula windows before layout loading
     for name in load_open_windows():
