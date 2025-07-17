@@ -4,6 +4,8 @@ import sympy  # type: ignore
 
 from ..tools.formula_base import Formula
 
+"""Collection of thermodynamic formula classes."""
+
 # ----------------------------------------------------------------------------
 # Thermodynamic Fundamentals
 # ----------------------------------------------------------------------------

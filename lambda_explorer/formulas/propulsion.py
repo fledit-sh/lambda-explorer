@@ -3,6 +3,7 @@ from __future__ import annotations
 import sympy  # type: ignore
 
 from ..tools.formula_base import Formula
+"""Formulas describing fundamental rocket propulsion relations."""
 
 class GeneralThrust(Formula):
     """F = m_dot * c_e = ∮ p dA_l"""
