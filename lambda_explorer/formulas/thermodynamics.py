@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sympy  # type: ignore
 
-from ..tools.aero_tools import Formula
+from ..tools.formula_base import Formula
 
 # ----------------------------------------------------------------------------
 # Thermodynamic Fundamentals
